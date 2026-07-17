@@ -20,6 +20,21 @@ export const metadata: Metadata = {
   description:
     "Organize finanças do MEI e freelancer: envie comprovante, IA categoriza, dashboard com lucro e estimativa de impostos.",
   keywords: ["MEI", "freelancer", "impostos", "DAS", "finanças", "comprovante", "Brasil"],
+  applicationName: "LucroMEI",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "LucroMEI",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "LucroMEI",
     description: "Tira foto do comprovante. Eu cuido do resto.",
