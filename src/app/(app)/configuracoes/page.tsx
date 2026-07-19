@@ -66,6 +66,7 @@ export default function ConfiguracoesPage() {
       }
     }
     router.push("/");
+    router.refresh();
   }
 
   return (
@@ -186,13 +187,13 @@ export default function ConfiguracoesPage() {
             variant="ghost"
             className="w-full text-rose-600"
             onClick={() => {
-              if (confirm("Apagar todos os dados locais de demonstração?")) {
-                clearDemoData();
+              if (confirm("Apagar dados locais desta conta neste aparelho?")) {
+                clearDemoData(settings?.user_id);
                 window.location.reload();
               }
             }}
           >
-            Limpar dados demo (local)
+            Limpar dados locais deste aparelho
           </Button>
         </CardContent>
       </Card>

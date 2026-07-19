@@ -23,14 +23,23 @@ function LoginForm() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
-        router.push(next);
+        setError(
+          "Login real não está ativo (falta Supabase). Configure NEXT_PUBLIC_SUPABASE_URL e ANON_KEY."
+        );
         return;
       }
       const supabase = createClient();
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (err) {
         setError(err.message);
         return;
+      }
+      if (data.user) {
+        const { ensureUserSettings } = await import("@/lib/user-settings");
+        await ensureUserSettings(supabase, data.user);
       }
       router.push(next);
       router.refresh();
@@ -59,10 +68,11 @@ function LoginForm() {
       <CardHeader>
         <CardTitle>Entrar</CardTitle>
         <CardDescription>
-          Acesse sua conta para ver o dashboard.
+          Entre com e-mail e senha. O teste grátis de 14 dias começa no cadastro.
           {!isSupabaseConfigured() && (
             <span className="mt-1 block text-amber-700">
-              Modo demo ativo (Supabase não configurado) — clique em Entrar para testar.
+              Supabase ainda não configurado neste ambiente — o login real não funciona até
+              colar as chaves.
             </span>
           )}
         </CardDescription>

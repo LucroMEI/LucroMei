@@ -90,28 +90,28 @@ export default function LandingPage() {
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/dashboard">
+              <Link href="/cadastro">
                 <Button
                   size="lg"
                   className="min-w-[230px] bg-emerald-600 text-base font-bold shadow-md hover:bg-emerald-700"
                 >
-                  Testar grátis 14 dias
+                  Criar conta · 14 dias grátis
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </Button>
               </Link>
-              <Link href="/cadastro">
+              <Link href="/login">
                 <Button
                   size="lg"
                   variant="outline"
                   className="min-w-[230px] border-2 border-slate-300 bg-white text-base font-semibold text-slate-800 hover:bg-slate-50"
                 >
-                  Criar conta
+                  Já tenho conta
                 </Button>
               </Link>
             </div>
 
             <p className="mt-4 text-sm font-medium text-slate-600">
-              14 dias grátis · depois R$ 39,90/mês · cancele quando quiser
+              Cadastro obrigatório · 14 dias grátis · depois R$ 39,90/mês
             </p>
 
             <div className="mx-auto mt-8 max-w-md">
@@ -242,12 +242,12 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/dashboard" className="mt-6 block">
+              <Link href="/cadastro" className="mt-6 block">
                 <Button
                   className="w-full bg-emerald-600 font-bold hover:bg-emerald-700"
                   size="lg"
                 >
-                  Começar teste grátis
+                  Criar conta e testar 14 dias
                 </Button>
               </Link>
             </div>
@@ -292,12 +292,12 @@ export default function LandingPage() {
           <p className="mx-auto mt-2 max-w-md text-sm font-medium text-emerald-100">
             14 dias grátis · sem cartão no teste
           </p>
-          <Link href="/dashboard" className="mt-6 inline-block">
+          <Link href="/cadastro" className="mt-6 inline-block">
             <Button
               size="lg"
               className="bg-white font-bold text-emerald-800 shadow-md hover:bg-emerald-50"
             >
-              Abrir o app agora
+              Criar conta grátis
               <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
             </Button>
           </Link>
