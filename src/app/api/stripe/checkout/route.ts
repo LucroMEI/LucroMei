@@ -5,6 +5,7 @@ import {
   priceIdForPlan,
   type CheckoutPlan,
 } from "@/lib/stripe";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -12,20 +13,37 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Stripe não configurado. Adicione STRIPE_SECRET_KEY e STRIPE_PRICE_* no .env.local",
+            "Stripe não configurado. Adicione STRIPE_SECRET_KEY e STRIPE_PRICE_* no ambiente.",
         },
         { status: 503 }
       );
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const plan = (body.plan || "monthly") as CheckoutPlan;
-    const email = body.email as string | undefined;
-    const customerId = body.customerId as string | undefined;
 
     if (!["monthly", "yearly", "earlybird"].includes(plan)) {
       return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
     }
+
+    // Utilizador autenticado (obrigatório)
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user?.email) {
+      return NextResponse.json(
+        { error: "Faça login para assinar um plano." },
+        { status: 401 }
+      );
+    }
+
+    const { data: settings } = await supabase
+      .from("user_settings")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     const stripe = getStripe();
     const priceId = priceIdForPlan(plan);
@@ -34,19 +52,48 @@ export async function POST(request: Request) {
       request.headers.get("origin") ||
       "http://localhost:3000";
 
+    let customerId = settings?.stripe_customer_id as string | null | undefined;
+
+    // Garante customer Stripe ligado ao user
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name:
+          (user.user_metadata?.full_name as string | undefined) ||
+          user.email.split("@")[0],
+        metadata: {
+          supabase_user_id: user.id,
+          app: "lucromei",
+        },
+      });
+      customerId = customer.id;
+      await supabase
+        .from("user_settings")
+        .update({ stripe_customer_id: customerId })
+        .eq("user_id", user.id);
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/assinatura?success=1`,
+      success_url: `${origin}/assinatura?success=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/assinatura?canceled=1`,
-      customer: customerId || undefined,
-      customer_email: customerId ? undefined : email,
+      customer: customerId,
+      client_reference_id: user.id,
+      // Trial já é no app (14 dias). No Stripe cobramos o plano escolhido.
       subscription_data: {
-        trial_period_days: 14,
-        metadata: { plan, app: "lucromei" },
+        metadata: {
+          plan,
+          app: "lucromei",
+          supabase_user_id: user.id,
+        },
       },
-      metadata: { plan, app: "lucromei" },
+      metadata: {
+        plan,
+        app: "lucromei",
+        supabase_user_id: user.id,
+      },
       allow_promotion_codes: true,
       locale: "pt-BR",
     });

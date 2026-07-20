@@ -63,27 +63,13 @@ export default function TrialAcabouPage() {
             )}
           </p>
           <p>
-            Para continuar a usar o LucroMEI (upload de comprovantes, dashboard e
-            alertas), será necessário assinar um plano.
-          </p>
-          <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            A cobrança automática via Stripe será ligada em breve. Enquanto isso,
-            fale conosco em{" "}
-            <a href="/contato" className="font-semibold text-emerald-700 underline">
-              Contato
-            </a>{" "}
-            ou{" "}
-            <a
-              href="mailto:contato.lucromei@gmail.com"
-              className="font-semibold text-emerald-700 underline"
-            >
-              contato.lucromei@gmail.com
-            </a>{" "}
-            se precisar de mais dias de teste.
+            Para continuar a usar o LucroMEI, assine um plano com cartão (Stripe).
+            Planos a partir de <strong>R$ 19,90/mês</strong> (Early Bird) ou{" "}
+            <strong>R$ 39,90/mês</strong>.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link href="/assinatura" className="flex-1">
-              <Button className="w-full">Ver planos</Button>
+              <Button className="w-full">Assinar agora</Button>
             </Link>
             <Link href="/contato" className="flex-1">
               <Button variant="outline" className="w-full">

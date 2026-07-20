@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,23 +18,64 @@ const features = [
   "Exportar relatórios CSV",
 ];
 
-export default function AssinaturaPage() {
-  const { ready, settings } = useFinance();
+function AssinaturaInner() {
+  const { ready, settings, reload } = useFinance();
+  const search = useSearchParams();
   const [loading, setLoading] = useState<CheckoutPlan | "portal" | null>(null);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    const success = search.get("success");
+    const sessionId = search.get("session_id");
+    const canceled = search.get("canceled");
+
+    if (canceled) {
+      setError("Checkout cancelado. Pode tentar de novo quando quiser.");
+      return;
+    }
+
+    if (success === "1" && sessionId) {
+      setSyncing(true);
+      (async () => {
+        try {
+          const res = await fetch("/api/stripe/sync-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sessionId }),
+          });
+          const data = await res.json();
+          if (!res.ok || data.ok === false) {
+            setError(
+              data.error ||
+                "Pagamento recebido, mas a sincronização atrasou. Atualize a página em alguns segundos."
+            );
+          } else {
+            setSuccessMsg("Pagamento confirmado! A sua assinatura está ativa.");
+            await reload();
+          }
+        } catch {
+          setError("Erro ao confirmar assinatura. Atualize a página em breve.");
+        } finally {
+          setSyncing(false);
+        }
+      })();
+    } else if (success === "1") {
+      setSuccessMsg("Pagamento concluído. A atualizar o seu plano…");
+      void reload();
+    }
+  }, [search, reload]);
 
   async function checkout(plan: CheckoutPlan) {
     setError("");
+    setSuccessMsg("");
     setLoading(plan);
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan,
-          email: "demo@lucromei.app",
-          customerId: settings?.stripe_customer_id,
-        }),
+        body: JSON.stringify({ plan }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -55,11 +97,7 @@ export default function AssinaturaPage() {
     setError("");
     setLoading("portal");
     try {
-      const res = await fetch("/api/stripe/portal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId: settings?.stripe_customer_id }),
-      });
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Portal indisponível");
       if (data.url) window.location.href = data.url;
@@ -75,6 +113,7 @@ export default function AssinaturaPage() {
   const trialEnd = settings?.trial_ends_at
     ? formatDateBR(settings.trial_ends_at.slice(0, 10))
     : null;
+  const isActive = settings?.subscription_status === "active";
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -82,69 +121,99 @@ export default function AssinaturaPage() {
         <h1 className="text-2xl font-bold">Plano e assinatura</h1>
         <p className="text-sm text-slate-600">
           Status:{" "}
-          <strong className="capitalize">{settings?.subscription_status || "trialing"}</strong>
+          <strong className="capitalize">
+            {settings?.subscription_status || "trialing"}
+          </strong>
+          {settings?.plan && settings.plan !== "none" && (
+            <> · Plano: <strong>{settings.plan}</strong></>
+          )}
           {trialEnd && settings?.subscription_status === "trialing" && (
             <> · Teste até {trialEnd}</>
           )}
         </p>
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {error}
-          <p className="mt-1 text-xs">
-            Configure as chaves Stripe no arquivo <code>.env.local</code> (veja{" "}
-            <code>.env.example</code>). Conta:{" "}
-            <a
-              className="underline"
-              href="https://dashboard.stripe.com/acct_1PCKl8PxfxckETDg/dashboard"
-              target="_blank"
-              rel="noreferrer"
-            >
-              dashboard Stripe
-            </a>
-            .
-          </p>
+      {syncing && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          A confirmar pagamento com a Stripe…
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {(Object.keys(PLAN_LABELS) as CheckoutPlan[]).map((plan) => {
-          const info = PLAN_LABELS[plan];
-          const highlight = plan === "monthly";
-          return (
-            <Card
-              key={plan}
-              className={highlight ? "border-2 border-emerald-500 shadow-md" : ""}
-            >
-              <CardHeader>
-                {highlight && (
-                  <span className="mb-1 text-xs font-semibold text-emerald-700">
-                    Recomendado
-                  </span>
-                )}
-                <CardTitle>{info.name}</CardTitle>
-                <CardDescription>{info.blurb}</CardDescription>
-                <p className="pt-2 text-2xl font-extrabold text-slate-900">{info.price}</p>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  className="w-full"
-                  variant={highlight ? "default" : "outline"}
-                  disabled={loading !== null}
-                  onClick={() => checkout(plan)}
-                >
-                  {loading === plan ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Assinar"
+      {successMsg && (
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+          {successMsg}{" "}
+          <a href="/dashboard" className="underline">
+            Ir ao dashboard
+          </a>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {error}
+        </div>
+      )}
+
+      {isActive ? (
+        <Card className="border-2 border-emerald-500">
+          <CardHeader>
+            <CardTitle>Assinatura ativa</CardTitle>
+            <CardDescription>
+              Obrigado! Tem acesso completo ao LucroMEI.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={openPortal} disabled={loading !== null}>
+              {loading === "portal" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Gerenciar assinatura / cancelar (Stripe)"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-3">
+          {(Object.keys(PLAN_LABELS) as CheckoutPlan[]).map((plan) => {
+            const info = PLAN_LABELS[plan];
+            const highlight = plan === "monthly";
+            return (
+              <Card
+                key={plan}
+                className={highlight ? "border-2 border-emerald-500 shadow-md" : ""}
+              >
+                <CardHeader>
+                  {highlight && (
+                    <span className="mb-1 text-xs font-semibold text-emerald-700">
+                      Recomendado
+                    </span>
                   )}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  <CardTitle>{info.name}</CardTitle>
+                  <CardDescription>{info.blurb}</CardDescription>
+                  <p className="pt-2 text-2xl font-extrabold text-slate-900">
+                    {info.price}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    className="w-full"
+                    variant={highlight ? "default" : "outline"}
+                    disabled={loading !== null || syncing}
+                    onClick={() => checkout(plan)}
+                  >
+                    {loading === plan ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Assinar com cartão"
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -159,46 +228,25 @@ export default function AssinaturaPage() {
               </li>
             ))}
           </ul>
-          {settings?.stripe_customer_id && (
-            <Button
-              variant="outline"
-              className="mt-6"
-              onClick={openPortal}
-              disabled={loading !== null}
-            >
-              {loading === "portal" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Gerenciar assinatura (Stripe)"
-              )}
-            </Button>
-          )}
+          <p className="mt-4 text-xs text-slate-500">
+            Modo teste Stripe: use o cartão{" "}
+            <code className="rounded bg-slate-100 px-1">4242 4242 4242 4242</code>,
+            data futura, CVC qualquer.
+          </p>
         </CardContent>
       </Card>
 
       <p className="text-center text-xs text-slate-400">
         Pagamentos processados com segurança pela Stripe. Cancele a qualquer momento.
-        Ao assinar, você aceita os{" "}
-        <a href="/termos" className="underline hover:text-slate-600">
-          Termos e Condições Gerais de Venda
-        </a>
-        , a{" "}
-        <a href="/privacidade" className="underline hover:text-slate-600">
-          Privacidade
-        </a>{" "}
-        e a{" "}
-        <a href="/confidencialidade" className="underline hover:text-slate-600">
-          Confidencialidade
-        </a>
-        .{" "}
-        <a href="/faq" className="underline hover:text-slate-600">
-          Dúvidas?
-        </a>{" "}
-        <a href="/contato" className="underline hover:text-slate-600">
-          Contato
-        </a>
-        .
       </p>
     </div>
+  );
+}
+
+export default function AssinaturaPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-slate-500">Carregando…</p>}>
+      <AssinaturaInner />
+    </Suspense>
   );
 }

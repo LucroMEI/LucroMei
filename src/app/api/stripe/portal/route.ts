@@ -1,20 +1,31 @@
 import { NextResponse } from "next/server";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
     if (!isStripeConfigured()) {
-      return NextResponse.json(
-        { error: "Stripe não configurado" },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: "Stripe não configurado" }, { status: 503 });
     }
 
-    const body = await request.json();
-    const customerId = body.customerId as string | undefined;
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const { data: settings } = await supabase
+      .from("user_settings")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const customerId = settings?.stripe_customer_id;
     if (!customerId) {
       return NextResponse.json(
-        { error: "customerId obrigatório (assinatura ainda não criada)" },
+        { error: "Ainda não há assinatura Stripe nesta conta." },
         { status: 400 }
       );
     }

@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
+import { applyCheckoutSession, applySubscriptionObject } from "@/lib/stripe-sync";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
 
 /**
- * Webhook Stripe — atualiza status de assinatura.
- * Configure em: Dashboard → Developers → Webhooks
- * URL: https://SEU_DOMINIO/api/stripe/webhook
- * Eventos: checkout.session.completed, customer.subscription.*
- *
- * Com Supabase: descomente o bloco de update com service role.
+ * Webhook Stripe
+ * URL produção: https://lucro-mei.vercel.app/api/stripe/webhook
+ * Eventos: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
  */
 export async function POST(request: Request) {
   if (!isStripeConfigured()) {
@@ -27,9 +25,13 @@ export async function POST(request: Request) {
     const raw = await request.text();
     if (secret && sig) {
       event = stripe.webhooks.constructEvent(raw, sig, secret);
-    } else {
-      // Dev sem assinatura (não use em produção)
+    } else if (process.env.NODE_ENV !== "production") {
       event = JSON.parse(raw) as Stripe.Event;
+    } else {
+      return NextResponse.json(
+        { error: "STRIPE_WEBHOOK_SECRET em falta" },
+        { status: 400 }
+      );
     }
   } catch (err) {
     console.error("[webhook] signature", err);
@@ -40,27 +42,20 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log("[webhook] checkout completed", {
-          customer: session.customer,
-          subscription: session.subscription,
-          plan: session.metadata?.plan,
-        });
-        // TODO: update user_settings via Supabase service role
-        // await updateSubscription({ customerId, subscriptionId, status: 'active', plan })
+        if (session.mode === "subscription") {
+          await applyCheckoutSession(session, stripe);
+        }
         break;
       }
       case "customer.subscription.updated":
-      case "customer.subscription.deleted": {
+      case "customer.subscription.deleted":
+      case "customer.subscription.created": {
         const sub = event.data.object as Stripe.Subscription;
-        console.log("[webhook] subscription", event.type, {
-          id: sub.id,
-          status: sub.status,
-          customer: sub.customer,
-        });
+        await applySubscriptionObject(sub);
         break;
       }
       default:
-        console.log("[webhook] ignored", event.type);
+        break;
     }
   } catch (err) {
     console.error("[webhook] handler", err);
