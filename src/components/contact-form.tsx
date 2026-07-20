@@ -5,7 +5,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea, Select } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { AtSign, Mail, MessageCircle } from "lucide-react";
+import { Mail, MessageCircle } from "lucide-react";
+import {
+  InstagramIcon,
+  INSTAGRAM_HANDLE,
+  INSTAGRAM_URL,
+} from "@/components/instagram-link";
 
 export function ContactForm() {
   const [name, setName] = useState("");
@@ -50,16 +55,18 @@ export function ContactForm() {
       <Card className="md:col-span-1">
         <CardContent className="space-y-4 pt-5">
           <div className="flex items-start gap-3">
-            <AtSign className="mt-0.5 h-5 w-5 text-emerald-600" />
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white shadow-sm">
+              <InstagramIcon className="h-4 w-4 text-white" />
+            </span>
             <div>
               <p className="text-sm font-semibold text-slate-900">Instagram</p>
               <a
-                href="https://www.instagram.com/lucromei.oficial"
+                href={INSTAGRAM_URL}
                 target="_blank"
-                rel="noreferrer"
-                className="text-sm text-emerald-700 hover:underline"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-emerald-700 hover:underline"
               >
-                @lucromei.oficial
+                {INSTAGRAM_HANDLE}
               </a>
               <p className="mt-1 text-xs text-slate-500">
                 Melhor canal para os primeiros testes e DMs.

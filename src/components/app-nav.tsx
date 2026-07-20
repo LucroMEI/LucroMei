@@ -12,6 +12,7 @@ import {
   Camera,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InstagramLink } from "@/components/instagram-link";
 
 const links = [
   { href: "/dashboard", label: "Início", icon: LayoutDashboard },
@@ -36,26 +37,29 @@ export function AppNav() {
             </span>
             LucroMEI
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            {links.map(({ href, label, icon: Icon }) => {
-              const active = pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav className="hidden items-center gap-1 md:flex">
+              {links.map(({ href, label, icon: Icon }) => {
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <InstagramLink className="hidden sm:inline-flex" />
+          </div>
         </div>
       </header>
 

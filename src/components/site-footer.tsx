@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstagramLink } from "@/components/instagram-link";
 
 const links = [
   { href: "/faq", label: "Dúvidas (FAQ)" },
@@ -19,6 +20,9 @@ export function SiteFooter() {
               Organização financeira para MEIs e freelancers. Estimativas apenas —
               não substitui contador.
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <InstagramLink variant="pill" />
+            </div>
             <p className="mt-3 text-xs">© {new Date().getFullYear()} LucroMEI · Sandra Tavares</p>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2">

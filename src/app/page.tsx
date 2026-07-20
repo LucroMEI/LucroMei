@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
+import { InstagramLink } from "@/components/instagram-link";
 
 const features = [
   {
@@ -54,6 +55,7 @@ export default function LandingPage() {
             <span className="text-lg">LucroMEI</span>
           </div>
           <div className="flex items-center gap-2">
+            <InstagramLink className="hidden sm:inline-flex" />
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-slate-700">
                 Entrar

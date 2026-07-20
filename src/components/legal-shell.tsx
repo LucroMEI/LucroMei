@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
+import { InstagramLink } from "@/components/instagram-link";
 
 export function LegalShell({
   title,
@@ -20,7 +21,7 @@ export function LegalShell({
             </span>
             LucroMEI
           </Link>
-          <nav className="flex flex-wrap gap-3 text-xs text-slate-600 sm:text-sm">
+          <nav className="flex flex-wrap items-center gap-3 text-xs text-slate-600 sm:text-sm">
             <Link href="/faq" className="hover:text-emerald-700">
               FAQ
             </Link>
@@ -30,6 +31,7 @@ export function LegalShell({
             <Link href="/termos" className="hover:text-emerald-700">
               Termos
             </Link>
+            <InstagramLink className="h-8 w-8" iconClassName="h-3.5 w-3.5" />
           </nav>
         </div>
       </header>
