@@ -112,7 +112,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="mt-4 max-w-lg text-sm font-medium text-slate-600">
+            <p className="mx-auto mt-4 max-w-lg text-center text-sm font-medium leading-relaxed text-slate-600">
               Crie sua conta e use <strong>14 dias grátis</strong>, sem cartão.
               Depois, se gostar, assina por <strong>R$ 39,90/mês</strong> — sem
               gostar, não paga nada.
