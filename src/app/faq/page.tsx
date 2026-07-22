@@ -33,9 +33,11 @@ const faqs: { q: string; a: ReactNode }[] = [
     q: "Quanto custa?",
     a: (
       <>
-        Teste grátis de <strong>14 dias</strong>. Depois, plano mensal de referência{" "}
-        <strong>R$ 39,90/mês</strong>, com opções anual e early bird quando disponíveis.
-        Veja a página de{" "}
+        Você testa <strong>14 dias grátis</strong>, <strong>sem cartão</strong> e{" "}
+        <strong>sem cobrança automática</strong>. Se gostar e quiser continuar, o
+        plano é <strong>R$ 39,90/mês</strong> (há opções anual e early bird quando
+        disponíveis). Se não assinar, não paga nada — só deixa de usar o app após o
+        teste. Veja{" "}
         <Link href="/assinatura" className="text-emerald-700 underline">
           planos
         </Link>
@@ -47,9 +49,10 @@ const faqs: { q: string; a: ReactNode }[] = [
     q: "Como funciona o teste grátis?",
     a: (
       <>
-        Você pode explorar o app e, no fluxo de assinatura, o Stripe pode oferecer 14
-        dias de trial conforme o plano. Cancele antes do fim do teste se não quiser
-        continuar — assim evita a primeira cobrança.
+        No cadastro você cria a conta e já começa o teste de <strong>14 dias</strong>,
+        sem informar cartão. No fim do período, se quiser seguir, assina pelo app
+        (Stripe). <strong>Não cobramos sozinho</strong> no fim do teste. Se não
+        assinar, o acesso fica bloqueado até haver um plano — e você não é cobrada.
       </>
     ),
   },

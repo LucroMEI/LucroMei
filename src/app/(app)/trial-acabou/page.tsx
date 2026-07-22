@@ -63,9 +63,10 @@ export default function TrialAcabouPage() {
             )}
           </p>
           <p>
-            Para continuar a usar o LucroMEI, assine um plano com cartão (Stripe).
-            Planos a partir de <strong>R$ 19,90/mês</strong> (Early Bird) ou{" "}
-            <strong>R$ 39,90/mês</strong>.
+            Você <strong>não foi cobrada</strong> — o teste acabou e o acesso fica
+            pausado. Se quiser continuar, assine um plano (Stripe). Planos a partir de{" "}
+            <strong>R$ 19,90/mês</strong> (Early Bird) ou{" "}
+            <strong>R$ 39,90/mês</strong>. Se preferir parar, é só não assinar.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link href="/assinatura" className="flex-1">

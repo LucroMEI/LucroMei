@@ -112,8 +112,10 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="mt-4 text-sm font-medium text-slate-600">
-              Cadastro obrigatório · 14 dias grátis · depois R$ 39,90/mês
+            <p className="mt-4 max-w-lg text-sm font-medium text-slate-600">
+              Crie sua conta e use <strong>14 dias grátis</strong>, sem cartão.
+              Depois, se gostar, assina por <strong>R$ 39,90/mês</strong> — sem
+              gostar, não paga nada.
             </p>
 
             <div className="mx-auto mt-8 max-w-md">
@@ -220,19 +222,23 @@ export default function LandingPage() {
             </p>
             <div className="mx-auto mt-8 max-w-sm rounded-2xl border-2 border-emerald-600 bg-white p-6 text-left shadow-md">
               <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
-                Plano único · teste 14 dias grátis
+                Teste grátis · só paga se quiser continuar
               </p>
               <p className="mt-2 text-4xl font-extrabold tabular-nums text-slate-900">
                 R$ 39,90
                 <span className="text-base font-semibold text-slate-500">/mês</span>
               </p>
+              <p className="mt-1 text-sm font-medium text-slate-600">
+                Só depois dos 14 dias, se você escolher assinar. Sem cartão no
+                cadastro e sem cobrança automática no fim do teste.
+              </p>
               <ul className="mt-5 space-y-2.5 text-sm font-medium text-slate-800">
                 {[
-                  "14 dias grátis (fase de teste)",
-                  "Upload ilimitado de comprovantes",
-                  "Categorização com IA",
-                  "Dashboard + estimativa de impostos",
-                  "Alertas de DAS",
+                  "14 dias grátis pra testar com calma",
+                  "Sem cartão no cadastro",
+                  "Só paga se assinar (pode parar quando quiser)",
+                  "Upload de comprovantes + categorização com IA",
+                  "Dashboard + estimativa de impostos e DAS",
                   "Exportar relatório",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2">
@@ -292,7 +298,7 @@ export default function LandingPage() {
             Pronto para saber o lucro de verdade?
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm font-medium text-emerald-100">
-            14 dias grátis · sem cartão no teste
+            14 dias grátis · sem cartão · só paga se quiser continuar
           </p>
           <Link href="/cadastro" className="mt-6 inline-block">
             <Button

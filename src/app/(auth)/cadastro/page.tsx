@@ -80,8 +80,9 @@ export default function CadastroPage() {
         <CardHeader>
           <CardTitle>Criar conta</CardTitle>
           <CardDescription>
-            <strong>14 dias grátis</strong> a partir do cadastro · Sem cartão no teste ·
-            Depois R$ 39,90/mês
+            <strong>14 dias grátis</strong> a partir do cadastro ·{" "}
+            <strong>sem cartão</strong> · sem cobrança automática. Se gostar, assina
+            por R$ 39,90/mês; se não, encerra o teste e não paga nada.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -143,9 +144,10 @@ export default function CadastroPage() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Criando…" : "Começar teste grátis de 14 dias"}
               </Button>
-              <p className="text-center text-[11px] text-slate-500">
-                Ao criar a conta, o prazo de 14 dias começa a contar. Depois será
-                necessário assinar para continuar.
+              <p className="text-center text-[11px] leading-relaxed text-slate-500">
+                Ao criar a conta, começam os 14 dias grátis (sem cartão). No fim do
+                teste, o app pede assinatura só se você quiser seguir usando —{" "}
+                <strong>não cobramos sozinho</strong>. Pode parar quando quiser.
               </p>
             </form>
           )}
