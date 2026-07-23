@@ -67,11 +67,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirect);
   }
 
-  if ((path === "/login" || path === "/cadastro") && user) {
+  // Utilizador logado não fica em login/cadastro (exceto fluxo de nova senha)
+  if ((path === "/login" || path === "/cadastro" || path === "/esqueci-senha") && user) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/dashboard";
     return NextResponse.redirect(redirect);
   }
+  // /nova-senha: permite sessão (link de recuperação do e-mail)
 
   // Trial / bloqueio
   if (user && isProtectedAppPath(path)) {

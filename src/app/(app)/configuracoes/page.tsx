@@ -15,6 +15,8 @@ export default function ConfiguracoesPage() {
   const router = useRouter();
   const { ready, settings, updateSettings } = useFinance();
   const [saved, setSaved] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [cnpj, setCnpj] = useState("");
@@ -67,6 +69,49 @@ export default function ConfiguracoesPage() {
     }
     router.push("/");
     router.refresh();
+  }
+
+  async function deleteAccount() {
+    setDeleteError("");
+    const ok = confirm(
+      "Excluir a sua conta LucroMEI de forma permanente?\n\nIsto apaga o login e os dados da conta. Não dá para desfazer."
+    );
+    if (!ok) return;
+    const typed = window.prompt(
+      'Para confirmar, digite EXCLUIR (em maiúsculas):'
+    );
+    if (typed !== "EXCLUIR") {
+      setDeleteError("Exclusão cancelada. É preciso digitar EXCLUIR.");
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: "EXCLUIR" }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setDeleteError(data.error || "Não foi possível excluir a conta.");
+        return;
+      }
+      clearDemoData(settings?.user_id);
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
+        }
+      }
+      router.push("/?conta=excluida");
+      router.refresh();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Erro ao excluir");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -211,6 +256,30 @@ export default function ConfiguracoesPage() {
             }}
           >
             Limpar dados locais deste aparelho
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-rose-200">
+        <CardHeader>
+          <CardTitle className="text-rose-700">Zona de perigo</CardTitle>
+          <CardDescription>
+            Excluir a conta apaga o login e os dados no LucroMEI. Se tiver assinatura
+            ativa no Stripe, cancele também em Plano / assinatura.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {deleteError && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{deleteError}</p>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-rose-300 text-rose-700 hover:bg-rose-50"
+            disabled={deleting}
+            onClick={deleteAccount}
+          >
+            {deleting ? "Excluindo…" : "Excluir minha conta"}
           </Button>
         </CardContent>
       </Card>
