@@ -74,9 +74,29 @@ export default function ConfiguracoesPage() {
       <div>
         <h1 className="text-2xl font-bold">Configurações</h1>
         <p className="text-sm text-slate-600">
-          Regime tributário, cidade e alertas do DAS.
+          Perfil, regime, plano e sair da conta.
         </p>
       </div>
+
+      {/* Conta no topo no mobile: Sair visível sem rolar */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Conta</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="w-full sm:flex-1" onClick={logout}>
+            Sair da conta
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full sm:flex-1"
+            onClick={() => router.push("/assinatura")}
+          >
+            Ver plano / assinatura
+          </Button>
+        </CardContent>
+      </Card>
 
       <form onSubmit={onSave}>
         <Card>
@@ -177,12 +197,9 @@ export default function ConfiguracoesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Conta</CardTitle>
+          <CardTitle>Dados neste aparelho</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <Button variant="outline" className="w-full" onClick={logout}>
-            Sair
-          </Button>
+        <CardContent>
           <Button
             variant="ghost"
             className="w-full text-rose-600"
