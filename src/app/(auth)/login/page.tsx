@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PasswordField } from "@/components/password-field";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
+import { getRecentEmails, rememberEmail } from "@/lib/saved-accounts";
 
 function LoginForm() {
   const router = useRouter();
@@ -16,6 +18,11 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recentEmails, setRecentEmails] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRecentEmails(getRecentEmails());
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +48,8 @@ function LoginForm() {
         const { ensureUserSettings } = await import("@/lib/user-settings");
         await ensureUserSettings(supabase, data.user);
       }
+      rememberEmail(email);
+      setRecentEmails(getRecentEmails());
       router.push(next);
       router.refresh();
     } catch (err) {
@@ -79,35 +88,67 @@ function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form
+          onSubmit={onSubmit}
+          className="space-y-4"
+          name="lucromei-login"
+          autoComplete="on"
+          method="post"
+        >
           <div>
             <Label htmlFor="email">E-mail</Label>
             <Input
               id="email"
+              name="username"
               type="email"
-              autoComplete="email"
+              autoComplete="username"
+              list="lucromei-recent-emails"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="voce@email.com"
+              required
             />
+            {recentEmails.length > 0 && (
+              <datalist id="lucromei-recent-emails">
+                {recentEmails.map((e) => (
+                  <option key={e} value={e} />
+                ))}
+              </datalist>
+            )}
+            {recentEmails.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {recentEmails.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => setEmail(e)}
+                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] text-slate-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div>
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+          <PasswordField
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={setPassword}
+            placeholder="••••••••"
+            required
+          />
           {error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
+          <p className="text-center text-[11px] leading-relaxed text-slate-500">
+            Várias contas: escolha o e-mail em baixo ou deixe o Chrome/Edge guardar
+            cada senha. Toque no olho para ver a senha.
+          </p>
         </form>
         <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
           <div className="h-px flex-1 bg-slate-200" />

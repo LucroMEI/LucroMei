@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PasswordField } from "@/components/password-field";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { ensureUserSettings } from "@/lib/user-settings";
+import { rememberEmail } from "@/lib/saved-accounts";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -51,6 +53,9 @@ export default function CadastroPage() {
       if (data.user) {
         await ensureUserSettings(supabase, data.user);
       }
+
+      // Guarda e-mail recente (senha fica no gestor do navegador, se o user aceitar)
+      rememberEmail(email);
 
       // Se a sessão já veio (confirmação de e-mail desligada no Supabase)
       if (data.session) {
@@ -105,11 +110,19 @@ export default function CadastroPage() {
               )}
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form
+              onSubmit={onSubmit}
+              className="space-y-4"
+              name="lucromei-cadastro"
+              autoComplete="on"
+              method="post"
+            >
               <div>
                 <Label htmlFor="name">Nome</Label>
                 <Input
                   id="name"
+                  name="name"
+                  autoComplete="name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Seu nome"
@@ -120,24 +133,25 @@ export default function CadastroPage() {
                 <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="voce@email.com"
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                />
-              </div>
+              <PasswordField
+                id="password"
+                name="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={setPassword}
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+              />
               {error && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
               )}
@@ -148,6 +162,10 @@ export default function CadastroPage() {
                 Ao criar a conta, começam os 14 dias grátis (sem cartão). No fim do
                 teste, o app pede assinatura só se você quiser seguir usando —{" "}
                 <strong>não cobramos sozinho</strong>. Pode parar quando quiser.
+              </p>
+              <p className="text-center text-[11px] leading-relaxed text-slate-500">
+                Com várias contas: aceite “guardar senha” no Chrome/Edge/Safari — o
+                navegador memoriza e-mail + senha de cada uma com segurança.
               </p>
             </form>
           )}

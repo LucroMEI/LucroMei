@@ -228,11 +228,18 @@ function AssinaturaInner() {
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-slate-500">
-            Modo teste Stripe: use o cartão{" "}
-            <code className="rounded bg-slate-100 px-1">4242 4242 4242 4242</code>,
-            data futura, CVC qualquer.
-          </p>
+          {process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith("pk_test") ? (
+            <p className="mt-4 text-xs text-slate-500">
+              Modo teste Stripe: use o cartão{" "}
+              <code className="rounded bg-slate-100 px-1">4242 4242 4242 4242</code>,
+              data futura, CVC qualquer.
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-slate-500">
+              Pagamento real com cartão. Pode cancelar a qualquer momento no portal da
+              assinatura. Trial de 14 dias não exige cartão no cadastro.
+            </p>
+          )}
         </CardContent>
       </Card>
 

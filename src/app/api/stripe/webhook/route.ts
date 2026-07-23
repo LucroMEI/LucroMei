@@ -23,13 +23,26 @@ export async function POST(request: Request) {
 
   try {
     const raw = await request.text();
+    if (!secret) {
+      return NextResponse.json(
+        { error: "STRIPE_WEBHOOK_SECRET em falta" },
+        { status: 400 }
+      );
+    }
+    if (!sig) {
+      // Stripe always sends stripe-signature; missing = probe/health check, not misconfig
+      return NextResponse.json(
+        { error: "Assinatura Stripe em falta (header stripe-signature)" },
+        { status: 400 }
+      );
+    }
     if (secret && sig) {
       event = stripe.webhooks.constructEvent(raw, sig, secret);
     } else if (process.env.NODE_ENV !== "production") {
       event = JSON.parse(raw) as Stripe.Event;
     } else {
       return NextResponse.json(
-        { error: "STRIPE_WEBHOOK_SECRET em falta" },
+        { error: "Webhook mal configurado" },
         { status: 400 }
       );
     }
