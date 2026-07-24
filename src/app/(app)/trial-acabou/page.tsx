@@ -44,7 +44,9 @@ export default function TrialAcabouPage() {
     <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col justify-center px-2">
       <Card className="border-2 border-amber-300 shadow-md">
         <CardHeader>
-          <CardTitle className="text-xl">Seu teste grátis de 14 dias terminou</CardTitle>
+          <CardTitle className="text-xl">
+            O intervalo acabou — e o caixa não gosta de férias longas ☕
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-sm text-slate-700">
           <p>
@@ -56,22 +58,27 @@ export default function TrialAcabouPage() {
             ) : null}
             {endLabel ? (
               <>
-                O período de avaliação encerrou em <strong>{endLabel}</strong>.
+                Seu teste grátis de 14 dias encerrou em <strong>{endLabel}</strong>.
               </>
             ) : (
-              <>O período de avaliação de 14 dias encerrou.</>
+              <>Seu teste grátis de 14 dias encerrou.</>
             )}
           </p>
+          <p className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5 text-amber-950">
+            <strong>Sem drama e sem cobrança surpresa:</strong> você{" "}
+            <strong>não foi cobrada</strong>. O acesso ficou em pausa — tipo
+            “estacionamento inteligente” do MEI. Para voltar a organizar
+            comprovantes e ver o lucro com clareza, é só escolher um plano.
+          </p>
           <p>
-            Você <strong>não foi cobrada</strong> — o teste acabou e o acesso fica
-            pausado. Se quiser continuar, assine um plano (Stripe). Há Early Bird de
-            lançamento (quando ainda houver vagas) a partir de{" "}
-            <strong>R$ 19,90/mês</strong>, ou o plano Mensal a{" "}
-            <strong>R$ 39,90/mês</strong>. Se preferir parar, é só não assinar.
+            Early Bird de lançamento (quando ainda houver vagas) a partir de{" "}
+            <strong>R$ 19,90/mês</strong>, ou Mensal a <strong>R$ 39,90/mês</strong>.
+            Se preferir parar por aqui, é só não assinar — a gente se despede de
+            bem e sem fatura escondida.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link href="/assinatura" className="flex-1">
-              <Button className="w-full">Assinar agora</Button>
+              <Button className="w-full">Escolher meu plano</Button>
             </Link>
             <Link href="/contato" className="flex-1">
               <Button variant="outline" className="w-full">
