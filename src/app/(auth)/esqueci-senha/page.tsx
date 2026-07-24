@@ -56,44 +56,49 @@ export default function EsqueciSenhaPage() {
         </CardHeader>
         <CardContent>
           {sent ? (
-            <div className="space-y-3 text-center text-sm text-slate-700">
+            <div className="space-y-4 text-center text-sm text-slate-700">
               <p className="font-semibold text-emerald-800">E-mail enviado</p>
               <p>
                 Se existir conta com <strong>{email}</strong>, você receberá um link em
                 alguns minutos. Confira também o spam.
               </p>
-              <Button className="w-full" onClick={() => (window.location.href = "/login")}>
+              <Link
+                href="/login"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+              >
                 Voltar ao login
-              </Button>
+              </Link>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-4" name="lucromei-esqueci-senha">
-              <div>
-                <Label htmlFor="email">E-mail da conta</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="voce@email.com"
-                  required
-                />
-              </div>
-              {error && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-              )}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Enviando…" : "Enviar link de recuperação"}
-              </Button>
-            </form>
+            <>
+              <form onSubmit={onSubmit} className="space-y-4" name="lucromei-esqueci-senha">
+                <div>
+                  <Label htmlFor="email">E-mail da conta</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="voce@email.com"
+                    required
+                  />
+                </div>
+                {error && (
+                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+                )}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Enviando…" : "Enviar link de recuperação"}
+                </Button>
+              </form>
+              <p className="mt-4 text-center text-sm text-slate-600">
+                <Link href="/login" className="font-semibold text-emerald-700 hover:underline">
+                  Voltar ao login
+                </Link>
+              </p>
+            </>
           )}
-          <p className="mt-4 text-center text-sm text-slate-600">
-            <Link href="/login" className="font-semibold text-emerald-700 hover:underline">
-              Voltar ao login
-            </Link>
-          </p>
         </CardContent>
       </Card>
     </div>
