@@ -57,13 +57,28 @@ export default function CadastroPage() {
       // Guarda e-mail recente (senha fica no gestor do navegador, se o user aceitar)
       rememberEmail(email);
 
-      // Se a sessão já veio (confirmação de e-mail desligada no Supabase)
+      // Nesta fase: sem exigir verificação de e-mail — entra no app se houver sessão
       if (data.session) {
         router.push("/dashboard");
         router.refresh();
         return;
       }
 
+      // Fallback: tenta login imediato (quando o Supabase não devolve session no signUp)
+      const { data: signInData } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInData.session) {
+        if (signInData.user) {
+          await ensureUserSettings(supabase, signInData.user);
+        }
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      // Só se o projeto Supabase ainda exigir confirmação de e-mail
       setNeedsEmailConfirm(true);
       setDone(true);
     } catch (err) {
@@ -97,9 +112,13 @@ export default function CadastroPage() {
                 <>
                   <p className="font-semibold text-emerald-800">Conta criada!</p>
                   <p>
-                    Verifique o e-mail <strong>{email}</strong> e confirme o link. Depois
-                    entre com a sua senha — o teste de <strong>14 dias</strong> começa ao
-                    criar a conta.
+                    Sua conta <strong>{email}</strong> foi criada. O teste de{" "}
+                    <strong>14 dias</strong> começa ao entrar.
+                  </p>
+                  <p className="text-slate-600">
+                    Se o login pedir confirmação de e-mail, é uma opção do painel
+                    Supabase (nesta fase pode desligar). Por agora, tente{" "}
+                    <strong>Entrar</strong> com a mesma senha.
                   </p>
                   <Button className="w-full" onClick={() => router.push("/login")}>
                     Ir para Entrar
