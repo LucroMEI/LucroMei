@@ -6,6 +6,7 @@ import {
   type CheckoutPlan,
 } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
+import { EARLYBIRD_MARKETING, isEarlybirdAvailable } from "@/lib/earlybird";
 
 export async function POST(request: Request) {
   try {
@@ -37,6 +38,17 @@ export async function POST(request: Request) {
         { error: "Faça login para assinar um plano." },
         { status: 401 }
       );
+    }
+
+    // Limite real Early Bird (sem expor números ao cliente)
+    if (plan === "earlybird") {
+      const open = await isEarlybirdAvailable();
+      if (!open) {
+        return NextResponse.json(
+          { error: EARLYBIRD_MARKETING.checkoutBlocked },
+          { status: 409 }
+        );
+      }
     }
 
     const { data: settings } = await supabase

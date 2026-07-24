@@ -25,6 +25,37 @@ function AssinaturaInner() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [syncing, setSyncing] = useState(false);
+  /** Só booleans/textos de marketing — nunca contagem de vagas */
+  const [earlybirdAvailable, setEarlybirdAvailable] = useState(true);
+  const [earlybirdBlurb, setEarlybirdBlurb] = useState(
+    "Preço de lançamento · faltam poucas vagas"
+  );
+  const [earlybirdBadge, setEarlybirdBadge] = useState("Lançamento");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/plans/availability", { cache: "no-store" });
+        const data = (await res.json()) as {
+          earlybirdAvailable?: boolean;
+          earlybirdBlurb?: string;
+          earlybirdBadge?: string;
+        };
+        if (cancelled) return;
+        if (typeof data.earlybirdAvailable === "boolean") {
+          setEarlybirdAvailable(data.earlybirdAvailable);
+        }
+        if (data.earlybirdBlurb) setEarlybirdBlurb(data.earlybirdBlurb);
+        if (data.earlybirdBadge) setEarlybirdBadge(data.earlybirdBadge);
+      } catch {
+        /* mantém defaults de marketing */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const success = search.get("success");
@@ -160,7 +191,23 @@ function AssinaturaInner() {
           <CardHeader>
             <CardTitle>Assinatura ativa</CardTitle>
             <CardDescription>
-              Obrigado! Tem acesso completo ao LucroMEI.
+              Obrigado! Tem acesso completo ao LucroMEI
+              {settings?.plan && settings.plan !== "none" ? (
+                <>
+                  {" "}
+                  · Plano:{" "}
+                  <strong>
+                    {settings.plan === "earlybird"
+                      ? "Early Bird"
+                      : settings.plan === "yearly"
+                        ? "Anual"
+                        : settings.plan === "monthly"
+                          ? "Mensal"
+                          : settings.plan}
+                  </strong>
+                </>
+              ) : null}
+              .
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -178,10 +225,21 @@ function AssinaturaInner() {
           {(Object.keys(PLAN_LABELS) as CheckoutPlan[]).map((plan) => {
             const info = PLAN_LABELS[plan];
             const highlight = plan === "monthly";
+            const isEarly = plan === "earlybird";
+            const soldOut = isEarly && !earlybirdAvailable;
+            const blurb = isEarly ? earlybirdBlurb : info.blurb;
             return (
               <Card
                 key={plan}
-                className={highlight ? "border-2 border-emerald-500 shadow-md" : ""}
+                className={
+                  soldOut
+                    ? "border border-slate-200 opacity-80"
+                    : highlight
+                      ? "border-2 border-emerald-500 shadow-md"
+                      : isEarly
+                        ? "border-2 border-amber-400/80 shadow-sm"
+                        : ""
+                }
               >
                 <CardHeader>
                   {highlight && (
@@ -189,8 +247,19 @@ function AssinaturaInner() {
                       Recomendado
                     </span>
                   )}
+                  {isEarly && (
+                    <span
+                      className={
+                        soldOut
+                          ? "mb-1 text-xs font-semibold text-slate-500"
+                          : "mb-1 text-xs font-semibold text-amber-700"
+                      }
+                    >
+                      {earlybirdBadge}
+                    </span>
+                  )}
                   <CardTitle>{info.name}</CardTitle>
-                  <CardDescription>{info.blurb}</CardDescription>
+                  <CardDescription>{blurb}</CardDescription>
                   <p className="pt-2 text-2xl font-extrabold text-slate-900">
                     {info.price}
                   </p>
@@ -198,12 +267,14 @@ function AssinaturaInner() {
                 <CardContent>
                   <Button
                     className="w-full"
-                    variant={highlight ? "default" : "outline"}
-                    disabled={loading !== null || syncing}
+                    variant={soldOut ? "outline" : highlight ? "default" : "outline"}
+                    disabled={loading !== null || syncing || soldOut}
                     onClick={() => checkout(plan)}
                   >
                     {loading === plan ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : soldOut ? (
+                      "Esgotado"
                     ) : (
                       "Assinar com cartão"
                     )}

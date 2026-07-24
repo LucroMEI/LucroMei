@@ -64,8 +64,9 @@ export default function TrialAcabouPage() {
           </p>
           <p>
             Você <strong>não foi cobrada</strong> — o teste acabou e o acesso fica
-            pausado. Se quiser continuar, assine um plano (Stripe). Planos a partir de{" "}
-            <strong>R$ 19,90/mês</strong> (Early Bird) ou{" "}
+            pausado. Se quiser continuar, assine um plano (Stripe). Há Early Bird de
+            lançamento (quando ainda houver vagas) a partir de{" "}
+            <strong>R$ 19,90/mês</strong>, ou o plano Mensal a{" "}
             <strong>R$ 39,90/mês</strong>. Se preferir parar, é só não assinar.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">

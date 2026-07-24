@@ -46,6 +46,7 @@ export const PLAN_LABELS: Record<CheckoutPlan, { name: string; price: string; bl
   earlybird: {
     name: "Early Bird",
     price: "R$ 19,90/mês",
-    blurb: "Primeiros 100 usuários — 1º ano",
+    /** Fallback de marketing — a UI prefere o texto de /api/plans/availability */
+    blurb: "Preço de lançamento · faltam poucas vagas",
   },
 };
