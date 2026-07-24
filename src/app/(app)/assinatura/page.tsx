@@ -126,10 +126,24 @@ function AssinaturaInner() {
 
   async function openPortal() {
     setError("");
+    setSuccessMsg("");
     setLoading("portal");
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
-      const data = await res.json();
+      const data = (await res.json()) as {
+        url?: string;
+        error?: string;
+        cleared?: boolean;
+      };
+      if (data.cleared) {
+        // Cliente Stripe apagado no Dashboard — estado do app limpo
+        setSuccessMsg(
+          data.error ||
+            "Estado da assinatura atualizado. Pode escolher um plano de novo."
+        );
+        await reload();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Portal indisponível");
       if (data.url) window.location.href = data.url;
     } catch (err) {
