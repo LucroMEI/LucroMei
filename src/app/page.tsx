@@ -22,7 +22,7 @@ const features = [
   {
     icon: Sparkles,
     title: "IA categoriza sozinha",
-    desc: "A IA lê o comprovante e sugere categoria e se é dedutível.",
+    desc: "A IA lê o comprovante, sugere categoria e organiza suas despesas.",
   },
   {
     icon: BarChart3,
@@ -128,10 +128,7 @@ export default function LandingPage() {
         <section className="mx-auto -mt-2 max-w-md px-4 pb-16 md:-mt-6">
           <div className="demo-phone rounded-2xl p-5">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-800">Este mês</span>
-              <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
-                Demo
-              </span>
+              <span className="text-sm font-bold text-slate-800">Resumo do caixa</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
@@ -172,7 +169,7 @@ export default function LandingPage() {
               Simples de verdade
             </h2>
             <p className="mx-auto mt-2 max-w-xl text-center text-base font-medium text-slate-600">
-              Feito para quem fatura até ~R$ 90 mil/ano e não quer contabilidade
+              Feito para quem fatura até R$ 81 mil/ano e não quer contabilidade
               complexa.
             </p>
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -273,7 +270,7 @@ export default function LandingPage() {
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               {[
                 ["/faq", "Dúvidas (FAQ)"],
-                ["/contato", "Contato"],
+                ["/contato", "Suporte / Contato"],
                 ["/termos", "Termos e vendas"],
                 ["/privacidade", "Privacidade"],
                 ["/confidencialidade", "Confidencialidade"],

@@ -18,11 +18,19 @@ export default function TermosPage() {
         <P>
           O serviço <strong>LucroMEI</strong> é prestado por{" "}
           <strong>Sandra Tavares</strong> (doravante “nós”, “LucroMEI” ou
-          “Prestador”), na qualidade de microempreendimento digital / projeto em
-          validação.
+          “Prestador”), na qualidade de auto-entrepreneur (França), SIRET{" "}
+          <strong>990 810 608 00010</strong> — produto digital para MEIs no
+          Brasil.
         </P>
         <P>
-          Contato: através da página{" "}
+          Contato:{" "}
+          <a
+            href="mailto:contato.lucromei@gmail.com"
+            className="font-medium text-emerald-700 underline"
+          >
+            contato.lucromei@gmail.com
+          </a>
+          , página{" "}
           <a href="/contato" className="font-medium text-emerald-700 underline">
             Contato
           </a>{" "}

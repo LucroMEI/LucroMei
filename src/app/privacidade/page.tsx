@@ -17,7 +17,15 @@ export default function PrivacidadePage() {
         <H2>1. Controlador</H2>
         <P>
           O controlador dos dados pessoais tratados no LucroMEI é{" "}
-          <strong>Sandra Tavares</strong>, responsável pelo produto. Contato: página{" "}
+          <strong>Sandra Tavares</strong>, auto-entrepreneur (França), SIRET{" "}
+          <strong>990 810 608 00010</strong>, responsável pelo produto. Contato:{" "}
+          <a
+            href="mailto:contato.lucromei@gmail.com"
+            className="text-emerald-700 underline"
+          >
+            contato.lucromei@gmail.com
+          </a>
+          , página{" "}
           <a href="/contato" className="text-emerald-700 underline">
             Contato
           </a>{" "}
