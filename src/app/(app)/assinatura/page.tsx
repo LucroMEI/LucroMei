@@ -15,7 +15,7 @@ const features = [
   "Dashboard de receitas, despesas e lucro",
   "Estimativa de DAS e impostos",
   "Alertas de vencimento",
-  "Exportar relatórios CSV",
+  "Exportar relatório (CSV)",
 ];
 
 function AssinaturaInner() {

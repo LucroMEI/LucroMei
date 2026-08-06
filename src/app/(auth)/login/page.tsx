@@ -77,7 +77,7 @@ function LoginForm() {
       <CardHeader>
         <CardTitle>Entrar</CardTitle>
         <CardDescription>
-          Entre com e-mail e senha. O teste grátis de 14 dias começa no cadastro
+          Entre com e-mail e senha. Os 14 dias grátis começam no cadastro
           (sem cartão; só paga se assinar depois).
           {!isSupabaseConfigured() && (
             <span className="mt-1 block text-amber-700">

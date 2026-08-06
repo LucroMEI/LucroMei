@@ -19,8 +19,8 @@ export const metadata: Metadata = {
     template: "%s · LucroMEI",
   },
   description:
-    "Organize finanças do MEI e freelancer: envie comprovante, IA categoriza, dashboard com lucro e estimativa de impostos.",
-  keywords: ["MEI", "freelancer", "impostos", "DAS", "finanças", "comprovante", "Brasil"],
+    "Organize finanças do MEI: envie comprovante, IA categoriza, dashboard com lucro e estimativa de impostos (DAS).",
+  keywords: ["MEI", "impostos", "DAS", "finanças", "comprovante", "Brasil", "LucroMEI"],
   applicationName: "LucroMEI",
   manifest: "/manifest.webmanifest",
   appleWebApp: {

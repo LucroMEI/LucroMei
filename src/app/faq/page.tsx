@@ -5,7 +5,7 @@ import { LegalShell, H2, P } from "@/components/legal-shell";
 
 export const metadata: Metadata = {
   title: "Dúvidas frequentes (FAQ)",
-  description: "Perguntas e respostas sobre o LucroMEI, preços, DAS, privacidade e teste grátis.",
+  description: "Perguntas e respostas sobre o LucroMEI, preços, DAS, privacidade e 14 dias grátis.",
 };
 
 const faqs: { q: string; a: ReactNode }[] = [
@@ -13,9 +13,9 @@ const faqs: { q: string; a: ReactNode }[] = [
     q: "O que é o LucroMEI?",
     a: (
       <>
-        É um app simples para MEIs e freelancers organizarem finanças: você tira foto
-        ou envia PDF do comprovante, a ferramenta ajuda a categorizar e o dashboard
-        mostra receitas, despesas, lucro estimado e impostos aproximados (como o DAS).
+        É um app simples para MEIs organizarem finanças: você tira foto ou envia PDF
+        do comprovante, a ferramenta sugere categoria e o dashboard mostra receitas,
+        despesas, lucro estimado e impostos aproximados (como o DAS).
       </>
     ),
   },
@@ -46,12 +46,12 @@ const faqs: { q: string; a: ReactNode }[] = [
     ),
   },
   {
-    q: "Como funciona o teste grátis?",
+    q: "Como funcionam os 14 dias grátis?",
     a: (
       <>
-        No cadastro você cria a conta e já começa o teste de <strong>14 dias</strong>,
+        No cadastro você cria a conta e já começam os <strong>14 dias grátis</strong>,
         sem informar cartão. No fim do período, se quiser seguir, assina pelo app
-        (Stripe). <strong>Não cobramos sozinho</strong> no fim do teste. Se não
+        (Stripe). <strong>Não cobramos sozinho</strong> no fim do período. Se não
         assinar, o acesso fica bloqueado até haver um plano — e você não é cobrada.
       </>
     ),

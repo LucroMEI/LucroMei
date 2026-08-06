@@ -175,7 +175,7 @@ export default function CadastroPage() {
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
               )}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Criando…" : "Começar teste grátis de 14 dias"}
+                {loading ? "Criando…" : "Começar 14 dias grátis"}
               </Button>
               <p className="text-center text-[11px] leading-relaxed text-slate-500">
                 Ao criar a conta, começam os 14 dias grátis (sem cartão). No fim do

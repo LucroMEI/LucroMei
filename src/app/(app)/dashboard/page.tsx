@@ -287,7 +287,7 @@ export default function DashboardPage() {
 
       {settings?.subscription_status === "trialing" && settings.trial_ends_at && (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Teste grátis ativo até{" "}
+          14 dias grátis ativos até{" "}
           <strong>{formatDateBR(settings.trial_ends_at.slice(0, 10))}</strong>.{" "}
           <Link href="/assinatura" className="font-semibold underline">
             Ver planos

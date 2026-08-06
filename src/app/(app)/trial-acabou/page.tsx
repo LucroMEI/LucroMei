@@ -58,10 +58,10 @@ export default function TrialAcabouPage() {
             ) : null}
             {endLabel ? (
               <>
-                Seu teste grátis de 14 dias encerrou em <strong>{endLabel}</strong>.
+                Seus 14 dias grátis encerraram em <strong>{endLabel}</strong>.
               </>
             ) : (
-              <>Seu teste grátis de 14 dias encerrou.</>
+              <>Seus 14 dias grátis encerraram.</>
             )}
           </p>
           <p className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5 text-amber-950">

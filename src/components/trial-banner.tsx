@@ -31,8 +31,8 @@ export function TrialBanner() {
           : "";
         setText(
           access.daysLeft <= 0
-            ? `Último dia do teste grátis${end ? ` (${end})` : ""}.`
-            : `Teste grátis: ${access.daysLeft} dia(s) restante(s)${end ? ` · até ${end}` : ""}.`
+            ? `Último dia dos 14 dias grátis${end ? ` (${end})` : ""}.`
+            : `14 dias grátis: ${access.daysLeft} dia(s) restante(s)${end ? ` · até ${end}` : ""}.`
         );
       } catch {
         // ignore

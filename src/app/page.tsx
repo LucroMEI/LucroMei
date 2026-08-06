@@ -31,8 +31,8 @@ const features = [
   },
   {
     icon: Bell,
-    title: "Alerta do DAS",
-    desc: "Não perca o vencimento e evite multa por esquecimento.",
+    title: "Lembrete do DAS",
+    desc: "Vencimento e valor aproximado no app — e calendário se quiser.",
   },
 ];
 
@@ -63,7 +63,7 @@ export default function LandingPage() {
             </Link>
             <Link href="/cadastro">
               <Button size="sm" className="bg-emerald-600 font-semibold shadow-sm hover:bg-emerald-700">
-                Testar grátis
+                14 dias grátis
               </Button>
             </Link>
           </div>
@@ -76,7 +76,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl px-4 pb-14 pt-10 text-center md:pb-20 md:pt-16">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
               <Shield className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-              Feito para MEIs e freelancers do Brasil · Fase de teste
+              Feito para MEIs do Brasil · Fase de teste
             </div>
 
             <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
@@ -219,15 +219,15 @@ export default function LandingPage() {
             </p>
             <div className="mx-auto mt-8 max-w-sm rounded-2xl border-2 border-emerald-600 bg-white p-6 text-left shadow-md">
               <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
-                Teste grátis · só paga se quiser continuar
+                14 dias grátis · só paga se quiser continuar
               </p>
               <p className="mt-2 text-4xl font-extrabold tabular-nums text-slate-900">
                 R$ 39,90
                 <span className="text-base font-semibold text-slate-500">/mês</span>
               </p>
               <p className="mt-1 text-sm font-medium text-slate-600">
-                Só depois dos 14 dias, se você escolher assinar. Sem cartão no
-                cadastro e sem cobrança automática no fim do teste.
+                Só depois dos 14 dias grátis, se você escolher assinar. Sem cartão no
+                cadastro e sem cobrança automática no fim do período.
               </p>
               <ul className="mt-5 space-y-2.5 text-sm font-medium text-slate-800">
                 {[
@@ -235,8 +235,8 @@ export default function LandingPage() {
                   "Sem cartão no cadastro",
                   "Só paga se assinar (pode parar quando quiser)",
                   "Upload de comprovantes + categorização com IA",
-                  "Dashboard + estimativa de impostos e DAS",
-                  "Exportar relatório",
+                  "Dashboard + estimativa de impostos e lembrete do DAS",
+                  "Exportar relatório (CSV)",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <CheckCircle2
@@ -302,7 +302,7 @@ export default function LandingPage() {
               size="lg"
               className="bg-white font-bold text-emerald-800 shadow-md hover:bg-emerald-50"
             >
-              Criar conta grátis
+              Criar conta · 14 dias grátis
               <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
             </Button>
           </Link>
