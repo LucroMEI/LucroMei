@@ -16,30 +16,57 @@ import { InstagramLink } from "@/components/instagram-link";
 const features = [
   {
     icon: Camera,
-    title: "Foto ou PDF do comprovante",
-    desc: "Envie pelo celular em segundos. Sem planilha complicada.",
+    title: "Cadastro em poucos segundos",
+    desc: "Crie a conta e já começa. Sem cartão e sem burocracia.",
   },
   {
     icon: Sparkles,
-    title: "IA categoriza sozinha",
-    desc: "A IA lê o comprovante, sugere categoria e organiza suas despesas.",
+    title: "Leitura automática do comprovante",
+    desc: "A IA lê a foto ou PDF e sugere valor, data e categoria.",
   },
   {
     icon: BarChart3,
-    title: "Dashboard de lucro",
-    desc: "Receitas, despesas, lucro estimado e impostos aproximados no mês.",
+    title: "Lucro estimado simples",
+    desc: "Receitas, despesas e quanto sobrou — sem termos contábeis complicados.",
   },
   {
     icon: Bell,
-    title: "Lembrete do DAS",
-    desc: "Vencimento e valor aproximado no app — e calendário se quiser.",
+    title: "Caixa no dia a dia",
+    desc: "Feito para quem trabalha sozinho e não quer planilha. Lembrete do DAS no app.",
   },
 ];
 
 const steps = [
   "Tire foto ou envie o PDF do comprovante",
-  "A IA preenche valor, data e categoria",
-  "Veja lucro e impostos estimados no dashboard",
+  "A IA sugere valor, data e categoria (você confirma)",
+  "Veja o lucro estimado e o lembrete do DAS no dashboard",
+];
+
+const plans = [
+  {
+    name: "Early Bird",
+    price: "R$ 19,90",
+    period: "/mês",
+    blurb: "Preço de lançamento · vagas limitadas",
+    highlight: true,
+    note: "Assinatura após os 14 dias grátis",
+  },
+  {
+    name: "Mensal",
+    price: "R$ 39,90",
+    period: "/mês",
+    blurb: "Flexível · cancela quando quiser",
+    highlight: false,
+    note: "Assinatura após os 14 dias grátis",
+  },
+  {
+    name: "Anual",
+    price: "R$ 29,90",
+    period: "/mês",
+    blurb: "Cobrado anualmente · ~25% de desconto",
+    highlight: false,
+    note: "Assinatura após os 14 dias grátis",
+  },
 ];
 
 export default function LandingPage() {
@@ -80,15 +107,17 @@ export default function LandingPage() {
             </div>
 
             <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
-              Tira foto do comprovante.
+              Tire uma foto do comprovante
               <br />
-              <span className="text-emerald-600">Eu cuido do resto.</span>
+              <span className="text-emerald-600">
+                e descubra quanto realmente sobrou.
+              </span>
             </h1>
 
             <p className="mx-auto mt-5 max-w-xl text-base font-medium leading-relaxed text-slate-700 md:text-lg">
-              Organize finanças sem dor de cabeça. A IA categoriza despesas, o
-              dashboard mostra o lucro e uma estimativa de impostos — antes do fim
-              do mês.
+              Feito para quem trabalha sozinho e não quer planilha. Leitura
+              automática do comprovante, lucro estimado simples e acompanhamento do
+              caixa no dia a dia — sem termos contábeis complicados.
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -212,50 +241,68 @@ export default function LandingPage() {
         <section className="border-t border-slate-200 bg-slate-50 py-16">
           <div className="mx-auto max-w-5xl px-4 text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-              Preço justo
+              Planos
             </h2>
             <p className="mt-2 font-medium text-slate-600">
-              Mais barato que uma multa de DAS — e economiza horas todo mês.
+              Comece com <strong>14 dias grátis</strong>, sem cartão. Só paga se
+              quiser continuar.
             </p>
-            <div className="mx-auto mt-8 max-w-sm rounded-2xl border-2 border-emerald-600 bg-white p-6 text-left shadow-md">
-              <p className="text-sm font-bold uppercase tracking-wide text-emerald-700">
-                14 dias grátis · só paga se quiser continuar
-              </p>
-              <p className="mt-2 text-4xl font-extrabold tabular-nums text-slate-900">
-                R$ 39,90
-                <span className="text-base font-semibold text-slate-500">/mês</span>
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-600">
-                Só depois dos 14 dias grátis, se você escolher assinar. Sem cartão no
-                cadastro e sem cobrança automática no fim do período.
-              </p>
-              <ul className="mt-5 space-y-2.5 text-sm font-medium text-slate-800">
-                {[
-                  "14 dias grátis pra testar com calma",
-                  "Sem cartão no cadastro",
-                  "Só paga se assinar (pode parar quando quiser)",
-                  "Upload de comprovantes + categorização com IA",
-                  "Dashboard + estimativa de impostos e lembrete do DAS",
-                  "Exportar relatório (CSV)",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-2">
-                    <CheckCircle2
-                      className="h-4 w-4 shrink-0 text-emerald-600"
-                      strokeWidth={2.5}
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/cadastro" className="mt-6 block">
-                <Button
-                  className="w-full bg-emerald-600 font-bold hover:bg-emerald-700"
-                  size="lg"
+            <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-3">
+              {plans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`rounded-2xl border-2 bg-white p-5 text-left shadow-sm ${
+                    plan.highlight
+                      ? "border-emerald-600 shadow-md ring-1 ring-emerald-100"
+                      : "border-slate-200"
+                  }`}
                 >
-                  Criar conta e testar 14 dias
-                </Button>
-              </Link>
+                  {plan.highlight && (
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+                      Mais popular no lançamento
+                    </p>
+                  )}
+                  <p className="text-sm font-bold text-slate-900">{plan.name}</p>
+                  <p className="mt-2 text-3xl font-extrabold tabular-nums text-slate-900">
+                    {plan.price}
+                    <span className="text-sm font-semibold text-slate-500">
+                      {plan.period}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-600">{plan.blurb}</p>
+                  <p className="mt-3 text-xs text-slate-500">{plan.note}</p>
+                </div>
+              ))}
             </div>
+            <ul className="mx-auto mt-8 max-w-lg space-y-2 text-left text-sm font-medium text-slate-800">
+              {[
+                "14 dias grátis · sem cartão no cadastro",
+                "Foto/PDF do comprovante + leitura automática",
+                "Lucro estimado + lembrete do DAS no app",
+                "Exportar relatório (CSV)",
+                "Não substitui o contador",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <CheckCircle2
+                    className="h-4 w-4 shrink-0 text-emerald-600"
+                    strokeWidth={2.5}
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <Link href="/cadastro" className="mt-8 inline-block">
+              <Button
+                className="min-w-[260px] bg-emerald-600 font-bold hover:bg-emerald-700"
+                size="lg"
+              >
+                Criar conta · 14 dias grátis
+              </Button>
+            </Link>
+            <p className="mx-auto mt-3 max-w-md text-xs text-slate-500">
+              Os planos Early Bird, Mensal e Anual ficam disponíveis na assinatura
+              depois do período grátis (Early Bird enquanto houver vagas).
+            </p>
           </div>
         </section>
 
@@ -292,7 +339,7 @@ export default function LandingPage() {
         {/* CTA final */}
         <section className="border-t border-slate-200 bg-emerald-600 px-4 py-14 text-center">
           <h2 className="text-2xl font-extrabold tracking-tight text-white md:text-3xl">
-            Pronto para saber o lucro de verdade?
+            Pronto para saber quanto realmente sobrou?
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm font-medium text-emerald-100">
             14 dias grátis · sem cartão · só paga se quiser continuar

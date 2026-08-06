@@ -45,12 +45,9 @@ export function SiteFooter() {
                   formulário
                 </Link>
               </p>
-              <p>
-                <span className="font-medium text-slate-700">Instagram:</span> @lucromei.oficial
-              </p>
-            </div>
-            <div className="mt-3 flex items-center gap-2">
-              <InstagramLink variant="pill" />
+              <div className="pt-1">
+                <InstagramLink variant="pill" />
+              </div>
             </div>
             <p className="mt-3 text-xs">
               © {new Date().getFullYear()} LucroMEI · Sandra Tavares
