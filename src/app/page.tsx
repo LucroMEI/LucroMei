@@ -7,6 +7,7 @@ import {
   Sparkles,
   Bell,
   ArrowRight,
+  Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
@@ -220,6 +221,35 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Calculadora gratuita — SEO + lead */}
+        <section className="border-t border-slate-200 bg-white py-14">
+          <div className="mx-auto max-w-5xl px-4">
+            <div className="flex flex-col items-center gap-6 rounded-2xl border-2 border-emerald-200 bg-emerald-50/60 px-5 py-8 text-center md:flex-row md:text-left md:px-8">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-sm">
+                <Calculator className="h-7 w-7" strokeWidth={2.25} />
+              </span>
+              <div className="flex-1">
+                <h2 className="text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
+                  Calculadora grátis: limite MEI de R$ 81 mil
+                </h2>
+                <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-600 md:text-base">
+                  Descubra se a projeção do seu faturamento fica dentro, perto ou
+                  acima do teto anual — em segundos, sem cadastro.
+                </p>
+              </div>
+              <Link href="/calculadora" className="shrink-0">
+                <Button
+                  size="lg"
+                  className="min-w-[200px] bg-emerald-600 font-bold hover:bg-emerald-700"
+                >
+                  Calcular agora
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Steps */}
         <section className="mx-auto max-w-5xl border-t border-slate-200 bg-white px-4 py-16">
           <h2 className="text-center text-2xl font-extrabold tracking-tight text-slate-900">
@@ -316,6 +346,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               {[
+                ["/calculadora", "Calculadora limite MEI"],
                 ["/faq", "Dúvidas (FAQ)"],
                 ["/contato", "Suporte / Contato"],
                 ["/termos", "Termos e vendas"],

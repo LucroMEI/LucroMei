@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import {
+  getSiteUrl,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+} from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,19 +19,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "LucroMEI — Tira foto do comprovante. Eu cuido do resto.",
-    template: "%s · LucroMEI",
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Organize finanças do MEI: envie comprovante, IA categoriza, dashboard com lucro e estimativa de impostos (DAS).",
-  keywords: ["MEI", "impostos", "DAS", "finanças", "comprovante", "Brasil", "LucroMEI"],
-  applicationName: "LucroMEI",
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "MEI",
+    "impostos",
+    "DAS",
+    "finanças",
+    "comprovante",
+    "Brasil",
+    "LucroMEI",
+    "limite MEI",
+    "faturamento MEI",
+  ],
+  applicationName: SITE_NAME,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "LucroMEI",
+    title: SITE_NAME,
     statusBarStyle: "default",
   },
   icons: {
@@ -37,10 +55,20 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "LucroMEI",
-    description: "Tira foto do comprovante. Eu cuido do resto.",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    url: siteUrl,
+    siteName: SITE_NAME,
     locale: "pt_BR",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+  alternates: {
+    canonical: siteUrl,
   },
 };
 

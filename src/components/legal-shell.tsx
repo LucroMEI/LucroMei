@@ -22,6 +22,9 @@ export function LegalShell({
             LucroMEI
           </Link>
           <nav className="flex flex-wrap items-center gap-3 text-xs text-slate-600 sm:text-sm">
+            <Link href="/calculadora" className="hover:text-emerald-700">
+              Calculadora
+            </Link>
             <Link href="/faq" className="hover:text-emerald-700">
               FAQ
             </Link>

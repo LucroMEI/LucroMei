@@ -20,6 +20,20 @@ const faqs: { q: string; a: ReactNode }[] = [
     ),
   },
   {
+    q: "Qual o limite de faturamento do MEI?",
+    a: (
+      <>
+        Em regra o teto é <strong>R$ 81.000 por ano</strong> de faturamento bruto.
+        Use a{" "}
+        <Link href="/calculadora" className="text-emerald-700 underline">
+          calculadora grátis do limite MEI
+        </Link>{" "}
+        para projetar se você fica dentro, perto ou acima — e confira sempre no
+        Portal do Empreendedor / com seu contador.
+      </>
+    ),
+  },
+  {
     q: "Substitui o contador?",
     a: (
       <>

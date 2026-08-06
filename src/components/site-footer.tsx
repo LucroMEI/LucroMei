@@ -2,6 +2,7 @@ import Link from "next/link";
 import { InstagramLink } from "@/components/instagram-link";
 
 const links = [
+  { href: "/calculadora", label: "Calculadora limite MEI" },
   { href: "/faq", label: "Dúvidas (FAQ)" },
   { href: "/contato", label: "Suporte / Contato" },
   { href: "/termos", label: "Termos e vendas" },
