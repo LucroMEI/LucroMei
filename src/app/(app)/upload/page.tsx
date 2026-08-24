@@ -19,10 +19,13 @@ import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import { useFinance } from "@/lib/use-finance";
 import type { AiReceiptResult, TransactionType } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
+import { dayFromIsoDate, yearMonthKey } from "@/lib/recurring";
+
+type RecurringPromptMode = "once" | "monthly" | "installments";
 
 export default function UploadPage() {
   const router = useRouter();
-  const { addTransaction } = useFinance();
+  const { addTransaction, addRecurring } = useFinance();
   const [dragging, setDragging] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -34,6 +37,10 @@ export default function UploadPage() {
   const [cameraError, setCameraError] = useState("");
   // No PC quase não existe câmera "environment" (traseira) — default user evita erro
   const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
+  const [recurringPromptOpen, setRecurringPromptOpen] = useState(false);
+  const [recurringMode, setRecurringMode] =
+    useState<RecurringPromptMode>("once");
+  const [installments, setInstallments] = useState("12");
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -314,25 +321,92 @@ export default function UploadPage() {
     setCameraOpen(true);
   };
 
-  const onSave = async () => {
+  const onSave = () => {
+    setError("");
+    const amountNum = Number(amount.replace(/\./g, "").replace(",", ".")) || 0;
+    if (amountNum <= 0) {
+      setError("Informe um valor válido.");
+      return;
+    }
+    // Despesa: pergunta se é fixa / parcelada antes de gravar
+    if (type === "despesa") {
+      setRecurringMode("once");
+      setInstallments("12");
+      setRecurringPromptOpen(true);
+      return;
+    }
+    void commitSave("once");
+  };
+
+  const commitSave = async (mode: RecurringPromptMode) => {
     setSaving(true);
     setError("");
+    setRecurringPromptOpen(false);
     try {
-      const amountNum = Number(amount.replace(/\./g, "").replace(",", ".")) || 0;
+      const amountNum =
+        Number(amount.replace(/\./g, "").replace(",", ".")) || 0;
       if (amountNum <= 0) {
         setError("Informe um valor válido.");
         return;
       }
+
+      const desc = description || fileName || "Comprovante";
+      const ym = yearMonthKey(
+        new Date(date.length === 10 ? date + "T12:00:00" : date)
+      );
+      const day = dayFromIsoDate(date);
+
+      let recurringId: string | null = null;
+
+      if (type === "despesa" && mode === "monthly") {
+        const rule = addRecurring({
+          description: desc.replace(/\s*\(fixa\)\s*$/i, "").trim(),
+          amount: amountNum,
+          day_of_month: day,
+          category,
+          is_deductible: isDeductible,
+          active: true,
+          installments_total: null,
+          installments_generated: 1,
+          last_generated_ym: ym,
+        });
+        recurringId = rule.id;
+      }
+
+      if (type === "despesa" && mode === "installments") {
+        const n = Math.min(48, Math.max(2, Math.floor(Number(installments) || 2)));
+        const rule = addRecurring({
+          description: desc.replace(/\s*\(\d+\/\d+\)\s*$/i, "").trim(),
+          amount: amountNum,
+          day_of_month: day,
+          category,
+          is_deductible: isDeductible,
+          active: n > 1,
+          installments_total: n,
+          installments_generated: 1,
+          last_generated_ym: ym,
+        });
+        recurringId = rule.id;
+      }
+
+      const parcelNote =
+        mode === "installments"
+          ? ` (1/${Math.min(48, Math.max(2, Math.floor(Number(installments) || 2)))})`
+          : mode === "monthly"
+            ? " (fixa)"
+            : "";
+
       addTransaction({
         date,
         amount: amountNum,
         type,
         category,
-        description: description || fileName || "Comprovante",
+        description: `${desc}${parcelNote}`,
         receipt_url: preview,
         ai_confidence: aiResult?.confidence ?? null,
         is_deductible: type === "despesa" ? isDeductible : false,
-        source: "upload",
+        source: recurringId ? "recorrente" : "upload",
+        recurring_id: recurringId,
       });
       router.push("/dashboard");
     } finally {
@@ -517,6 +591,88 @@ export default function UploadPage() {
               >
                 <FileUp className="h-4 w-4" />
                 Ficheiro
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pergunta: despesa fixa / parcelada */}
+      {recurringPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl">
+            <h2 className="text-lg font-bold text-slate-900">
+              Esta despesa se repete?
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Útil para assinaturas e compras no cartão em parcelas — o app
+              lança nos próximos meses sozinho.
+            </p>
+            <div className="mt-4 space-y-2">
+              {(
+                [
+                  {
+                    id: "once" as const,
+                    title: "Não, só esta vez",
+                    desc: "Lança só este comprovante",
+                  },
+                  {
+                    id: "monthly" as const,
+                    title: "Sim, todo mês",
+                    desc: "Assinatura fixa até você pausar",
+                  },
+                  {
+                    id: "installments" as const,
+                    title: "Sim, em parcelas",
+                    desc: "Ex.: compra no cartão em 6× ou 12×",
+                  },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setRecurringMode(opt.id)}
+                  className={`w-full rounded-xl border-2 px-4 py-3 text-left transition ${
+                    recurringMode === opt.id
+                      ? "border-emerald-600 bg-emerald-50"
+                      : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
+                >
+                  <p className="text-sm font-bold text-slate-900">{opt.title}</p>
+                  <p className="text-xs text-slate-600">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+            {recurringMode === "installments" && (
+              <div className="mt-4">
+                <Label htmlFor="parcels">Quantas parcelas?</Label>
+                <Input
+                  id="parcels"
+                  type="number"
+                  min={2}
+                  max={48}
+                  value={installments}
+                  onChange={(e) => setInstallments(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                className="w-full"
+                disabled={saving}
+                onClick={() => void commitSave(recurringMode)}
+              >
+                {saving ? "Salvando…" : "Confirmar e salvar"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={saving}
+                onClick={() => setRecurringPromptOpen(false)}
+              >
+                Voltar
               </Button>
             </div>
           </div>

@@ -88,6 +88,8 @@ create table if not exists public.recurring_expenses (
   is_deductible boolean default true,
   active boolean default true,
   last_generated_ym text,
+  installments_total int,
+  installments_generated int default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

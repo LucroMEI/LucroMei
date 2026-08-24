@@ -207,15 +207,20 @@ export function addDemoRecurring(
   partial: Omit<
     RecurringExpense,
     "id" | "user_id" | "created_at" | "last_generated_ym"
-  >,
+  > & {
+    last_generated_ym?: string | null;
+    installments_generated?: number;
+  },
   userId: string = DEMO_USER
 ): RecurringExpense {
   const list = loadDemoRecurring(userId);
   const item: RecurringExpense = {
+    installments_total: null,
+    installments_generated: 0,
     ...partial,
     id: uid(),
     user_id: userId,
-    last_generated_ym: null,
+    last_generated_ym: partial.last_generated_ym ?? null,
     created_at: new Date().toISOString(),
   };
   list.unshift(item);

@@ -137,7 +137,10 @@ export function useFinance(month?: { year: number; month: number }) {
       partial: Omit<
         RecurringExpense,
         "id" | "user_id" | "created_at" | "last_generated_ym"
-      >
+      > & {
+        last_generated_ym?: string | null;
+        installments_generated?: number;
+      }
     ) => {
       const item = addDemoRecurring(partial, userId);
       void reload();

@@ -26,6 +26,8 @@ const emptyForm = {
   category: "Software / Assinaturas",
   is_deductible: true,
   active: true,
+  /** "" = todo mês; número = parcelas */
+  installments_total: "",
 };
 
 export default function DespesasFixasPage() {
@@ -61,6 +63,7 @@ export default function DespesasFixasPage() {
       day_of_month: String(p.day),
       is_deductible: isDeductibleDefault(p.category),
       active: true,
+      installments_total: "",
     }));
     setEditingId(null);
     setShowForm(true);
@@ -75,6 +78,10 @@ export default function DespesasFixasPage() {
       category: r.category,
       is_deductible: r.is_deductible,
       active: r.active,
+      installments_total:
+        r.installments_total != null && r.installments_total > 0
+          ? String(r.installments_total)
+          : "",
     });
     setShowForm(true);
   }
@@ -91,6 +98,11 @@ export default function DespesasFixasPage() {
       Number(String(form.amount).replace(/\./g, "").replace(",", ".")) || 0;
     if (!form.description.trim() || amount <= 0) return;
 
+    const parcelsRaw = form.installments_total.trim();
+    const parcels = parcelsRaw
+      ? Math.min(48, Math.max(2, Math.floor(Number(parcelsRaw) || 0)))
+      : null;
+
     const payload = {
       description: form.description.trim(),
       amount,
@@ -98,12 +110,16 @@ export default function DespesasFixasPage() {
       category: form.category,
       is_deductible: form.is_deductible,
       active: form.active,
+      installments_total: parcels && parcels >= 2 ? parcels : null,
     };
 
     if (editingId) {
       updateRecurring(editingId, payload);
     } else {
-      addRecurring(payload);
+      addRecurring({
+        ...payload,
+        installments_generated: 0,
+      });
     }
     resetForm();
   }
@@ -125,8 +141,8 @@ export default function DespesasFixasPage() {
             Despesas fixas
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Assinaturas e pagamentos que se repetem todo mês. No dia escolhido,
-            a despesa entra sozinha no caixa quando você abrir o app.
+            Assinaturas todo mês ou compras parceladas no cartão. Também pode
+            marcar isso ao salvar um comprovante.
           </p>
         </div>
         <Button
@@ -234,6 +250,27 @@ export default function DespesasFixasPage() {
                   ))}
                 </Select>
               </div>
+              <div>
+                <Label htmlFor="parcels">Parcelas (opcional)</Label>
+                <Input
+                  id="parcels"
+                  type="number"
+                  min={2}
+                  max={48}
+                  placeholder="Vazio = todo mês (assinatura)"
+                  value={form.installments_total}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      installments_total: e.target.value,
+                    }))
+                  }
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Ex.: 12 para compra no cartão em 12×. Deixe vazio se for
+                  assinatura contínua.
+                </p>
+              </div>
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
                   type="checkbox"
@@ -282,6 +319,12 @@ export default function DespesasFixasPage() {
                 <p className="text-sm text-slate-600">
                   {formatBRL(r.amount)} · todo dia {r.day_of_month} ·{" "}
                   {r.category}
+                  {r.installments_total != null && r.installments_total > 0 && (
+                    <span className="ml-1">
+                      · {r.installments_generated ?? 0}/{r.installments_total}{" "}
+                      parcelas
+                    </span>
+                  )}
                   {!r.active && (
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                       Pausada

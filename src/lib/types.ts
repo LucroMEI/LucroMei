@@ -30,7 +30,7 @@ export interface Transaction {
   updated_at?: string;
 }
 
-/** Despesa fixa mensal (assinatura, hosting, etc.) */
+/** Despesa fixa mensal (assinatura) ou parcelada (cartão em N meses) */
 export interface RecurringExpense {
   id: string;
   user_id: string;
@@ -43,6 +43,13 @@ export interface RecurringExpense {
   active: boolean;
   /** Último mês gerado, ex. "2026-08" — evita regenerar se apagar */
   last_generated_ym: string | null;
+  /**
+   * null / undefined = todo mês até pausar (assinatura).
+   * número = total de parcelas (ex. 12× no cartão).
+   */
+  installments_total?: number | null;
+  /** Quantas vezes já gerou (inclui a 1ª do comprovante) */
+  installments_generated?: number;
   created_at?: string;
   updated_at?: string;
 }
