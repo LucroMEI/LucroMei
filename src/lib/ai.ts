@@ -2,22 +2,26 @@ import OpenAI from "openai";
 import { CATEGORY_NAMES, isDeductibleDefault } from "./categories";
 import type { AiReceiptResult, TransactionType } from "./types";
 
+/** Modelos com visão — tenta em ordem se um falhar */
+const VISION_MODELS = ["grok-4", "grok-4.6", "grok-4.5", "grok-4-fast-non-reasoning"] as const;
+const TEXT_MODELS = ["grok-4", "grok-4.6", "grok-4.5"] as const;
+
 const SYSTEM_PROMPT = `Você é o assistente financeiro do LucroMEI, app para MEIs e freelancers brasileiros.
-Analise o comprovante (foto ou PDF) e extraia dados estruturados em JSON.
+Analise o comprovante e extraia dados estruturados em JSON.
 
 Regras:
-- Valores em BRL (reais). amount é número positivo (ex: 89.90).
-- date no formato YYYY-MM-DD. Se não houver data, use null.
-- type: "despesa" se for compra/pagamento; "receita" se for recebimento/transferência recebida/venda.
-- category: escolha EXATAMENTE uma desta lista: ${CATEGORY_NAMES.join(", ")}
-- is_deductible: true se for despesa tipicamente dedutível da atividade (material, transporte, internet, aluguel, software, marketing, equipamentos). false para pessoal, saúde, impostos.
-- description: curta, em português do Brasil (ex: "Posto Shell - gasolina").
+- amount: número positivo. Se o comprovante estiver em EUR (€), converta para BRL com taxa aproximada 6,0 e mencione na description (ex: "Meta Verified — 16,99 € ≈ R$ 101,94").
+- date: YYYY-MM-DD. Se não houver data, null.
+- type: "despesa" para compra/pagamento/assinatura; "receita" para recebimento/PIX recebido/venda.
+- category: EXATAMENTE uma desta lista: ${CATEGORY_NAMES.join(", ")}
+- is_deductible: true para gasto do negócio (software, marketing, hosting, material, transporte trabalho). false para pessoal/saúde.
+- description: curta em português do Brasil, com nome do serviço/estabelecimento (NÃO use o nome do arquivo).
 - confidence: 0 a 1.
-- merchant: nome do estabelecimento se visível.
-- Responda SOMENTE com JSON válido, sem markdown.`;
+- merchant: nome visível no comprovante.
+- Responda SOMENTE JSON válido, sem markdown.`;
 
 function getClient() {
-  const key = process.env.XAI_API_KEY;
+  const key = process.env.XAI_API_KEY?.trim();
   if (!key) return null;
   return new OpenAI({
     apiKey: key,
@@ -31,29 +35,50 @@ function parseJsonLoose(text: string): unknown {
     .replace(/^```\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  return JSON.parse(cleaned);
+  // tenta extrair objeto se vier texto extra
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  const json =
+    start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+  return JSON.parse(json);
 }
 
 function normalizeResult(raw: Record<string, unknown>): AiReceiptResult {
-  const amount = typeof raw.amount === "number" ? raw.amount : Number(raw.amount) || null;
+  const amount =
+    typeof raw.amount === "number" ? raw.amount : Number(raw.amount) || null;
   const type: TransactionType = raw.type === "receita" ? "receita" : "despesa";
-  let category = typeof raw.category === "string" ? raw.category : "Outras despesas";
+  let category =
+    typeof raw.category === "string" ? raw.category : "Outras despesas";
   if (!CATEGORY_NAMES.includes(category)) {
     category = type === "receita" ? "Outras receitas" : "Outras despesas";
   }
   const is_deductible =
-    typeof raw.is_deductible === "boolean" ? raw.is_deductible : isDeductibleDefault(category);
+    typeof raw.is_deductible === "boolean"
+      ? raw.is_deductible
+      : isDeductibleDefault(category);
   const confidence =
     typeof raw.confidence === "number"
       ? Math.min(1, Math.max(0, raw.confidence))
       : 0.7;
 
+  let description =
+    typeof raw.description === "string" ? raw.description.slice(0, 200) : "";
+  if (!description.trim()) {
+    description =
+      typeof raw.merchant === "string" && raw.merchant
+        ? raw.merchant
+        : "Comprovante";
+  }
+
   return {
     amount: amount && amount > 0 ? Math.round(amount * 100) / 100 : null,
-    date: typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}/.test(raw.date) ? raw.date.slice(0, 10) : null,
+    date:
+      typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}/.test(raw.date)
+        ? raw.date.slice(0, 10)
+        : null,
     type,
     category,
-    description: typeof raw.description === "string" ? raw.description.slice(0, 200) : "Comprovante",
+    description,
     is_deductible: type === "despesa" ? is_deductible : false,
     confidence,
     merchant: typeof raw.merchant === "string" ? raw.merchant : undefined,
@@ -62,66 +87,54 @@ function normalizeResult(raw: Record<string, unknown>): AiReceiptResult {
   };
 }
 
-const MOCK_MSG =
-  "Arquivo recebido, mas a leitura por IA ainda não está ativa (falta XAI_API_KEY). Preencha valor e categoria manualmente — o ficheiro fica anexado à descrição.";
-
-/** Fallback heurístico quando não há API key (demo). NÃO lê a imagem — só o nome do ficheiro. */
-export function mockAnalyzeReceipt(fileName: string): AiReceiptResult {
-  const lower = fileName.toLowerCase();
-  const base = {
-    source: "mock" as const,
-    message: MOCK_MSG,
-    date: new Date().toISOString().slice(0, 10),
-  };
-
-  if (lower.includes("uber") || lower.includes("99") || lower.includes("gasolina") || lower.includes("posto")) {
-    return {
-      ...base,
-      amount: 67.5,
-      type: "despesa",
-      category: "Combustível / Transporte",
-      description: "Transporte / combustível (simulado pelo nome do ficheiro)",
-      is_deductible: true,
-      confidence: 0.2,
-      merchant: "Transporte",
-    };
-  }
-  if (lower.includes("ifood") || lower.includes("restaurante") || lower.includes("padaria")) {
-    return {
-      ...base,
-      amount: 42.9,
-      type: "despesa",
-      category: "Alimentação (trabalho)",
-      description: "Alimentação (simulado pelo nome do ficheiro)",
-      is_deductible: true,
-      confidence: 0.2,
-    };
-  }
-  if (lower.includes("pix") || lower.includes("receb")) {
-    return {
-      ...base,
-      amount: 350,
-      type: "receita",
-      category: "Recebimentos PIX",
-      description: "Recebimento PIX (simulado pelo nome do ficheiro)",
-      is_deductible: false,
-      confidence: 0.2,
-    };
-  }
+/** Quando a IA não está disponível ou falhou — formulário vazio para preencher. */
+export function emptyAnalyzeResult(fileName?: string): AiReceiptResult {
   return {
-    ...base,
-    amount: null, // força o utilizador a preencher o valor real
+    amount: null,
+    date: new Date().toISOString().slice(0, 10),
     type: "despesa",
     category: "Outras despesas",
-    description: `Anexo: ${fileName || "comprovante"} — preencha o valor manualmente`,
-    is_deductible: false,
+    description: "",
+    is_deductible: true,
     confidence: 0,
+    source: "mock",
+    message:
+      "Não foi possível ler o comprovante automaticamente. Preencha valor, data e descrição.",
   };
+}
+
+/** @deprecated use emptyAnalyzeResult — mantido para imports existentes */
+export function mockAnalyzeReceipt(fileName: string): AiReceiptResult {
+  return emptyAnalyzeResult(fileName);
+}
+
+async function chatJson(
+  client: OpenAI,
+  models: readonly string[],
+  messages: OpenAI.Chat.ChatCompletionMessageParam[]
+): Promise<Record<string, unknown>> {
+  let lastErr: unknown;
+  for (const model of models) {
+    try {
+      const response = await client.chat.completions.create({
+        model,
+        temperature: 0.1,
+        messages,
+      });
+      const text = response.choices[0]?.message?.content || "{}";
+      return parseJsonLoose(text) as Record<string, unknown>;
+    } catch (err) {
+      lastErr = err;
+      console.error(`[ai.chatJson] model=${model}`, err);
+    }
+  }
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error("Falha em todos os modelos de IA");
 }
 
 /**
  * Analisa comprovante com Grok Vision (xAI) ou texto extraído de PDF.
- * imageBase64: data URL ou base64 puro. pdfText: texto já extraído no servidor.
  */
 export async function analyzeReceipt(params: {
   imageBase64: string;
@@ -131,7 +144,12 @@ export async function analyzeReceipt(params: {
 }): Promise<AiReceiptResult> {
   const client = getClient();
   if (!client) {
-    return mockAnalyzeReceipt(params.fileName || "comprovante");
+    console.error("[ai.analyzeReceipt] XAI_API_KEY ausente no servidor");
+    return {
+      ...emptyAnalyzeResult(params.fileName),
+      message:
+        "Leitura automática desativada no servidor (configure XAI_API_KEY na Vercel). Preencha os campos manualmente.",
+    };
   }
 
   const isPdf =
@@ -140,67 +158,78 @@ export async function analyzeReceipt(params: {
     Boolean(params.fileName?.toLowerCase().endsWith(".pdf"));
 
   try {
-    // PDF → análise por TEXTO (vision não aceita PDF de forma fiável)
-    if (isPdf && params.pdfText) {
-      const response = await client.chat.completions.create({
-        model: "grok-4.5",
-        temperature: 0.1,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `Analise este comprovante/fatura em texto (extraído de PDF "${params.fileName || "comprovante.pdf"}").
-Se o valor estiver em EUR (€), converta para BRL aproximado usando ~6,0 BRL por 1 EUR e indique na description que era €.
-Extraia amount, date, type, category em JSON.
+    if (isPdf && params.pdfText && params.pdfText.length >= 20) {
+      const parsed = await chatJson(client, TEXT_MODELS, [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Analise este comprovante/fatura (texto de PDF "${params.fileName || "comprovante.pdf"}").
+NÃO use o nome do arquivo como description — use o que está no texto (ex.: Meta Verified, Hostinger, Stripe).
 
---- TEXTO DO PDF ---
-${params.pdfText.slice(0, 10000)}
+--- TEXTO ---
+${params.pdfText.slice(0, 12000)}
 --- FIM ---`,
-          },
-        ],
-      });
-      const text = response.choices[0]?.message?.content || "{}";
-      const parsed = parseJsonLoose(text) as Record<string, unknown>;
+        },
+      ]);
       return normalizeResult(parsed);
     }
 
+    if (isPdf && !params.pdfText) {
+      return {
+        ...emptyAnalyzeResult(params.fileName),
+        message:
+          "Não consegui extrair texto deste PDF. Tente foto do comprovante ou preencha manualmente.",
+      };
+    }
+
     if (!params.imageBase64) {
-      throw new Error("Imagem vazia para análise");
+      return emptyAnalyzeResult(params.fileName);
     }
 
     const dataUrl = params.imageBase64.startsWith("data:")
       ? params.imageBase64
       : `data:${params.mimeType};base64,${params.imageBase64}`;
 
-    // Só jpeg/png na vision (docs xAI)
-    const response = await client.chat.completions.create({
-      model: "grok-4.5",
-      temperature: 0.1,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Analise este comprovante (foto) e retorne o JSON pedido com valor, data, tipo e categoria reais lidos da imagem. Valores em BRL.",
-            },
-            {
-              type: "image_url",
-              image_url: { url: dataUrl, detail: "high" },
-            },
-          ],
-        },
-      ],
-    });
+    // Garantir jpeg/png na data URL
+    const safeUrl =
+      dataUrl.startsWith("data:image/")
+        ? dataUrl
+        : `data:image/jpeg;base64,${params.imageBase64.replace(/^data:[^;]+;base64,/, "")}`;
 
-    const text = response.choices[0]?.message?.content || "{}";
-    const parsed = parseJsonLoose(text) as Record<string, unknown>;
+    const parsed = await chatJson(client, VISION_MODELS, [
+      { role: "system", content: SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Analise este comprovante (foto). Extraia valor, data, tipo e categoria REAIS da imagem.
+NÃO invente com base no nome do arquivo (${params.fileName || "sem nome"}).
+Valores em BRL (converta € se preciso).`,
+          },
+          {
+            type: "image_url",
+            image_url: { url: safeUrl, detail: "high" },
+          },
+        ],
+      },
+    ]);
     return normalizeResult(parsed);
   } catch (err) {
     console.error("[ai.analyzeReceipt]", err);
-    // Não expor erro técnico na UI — devolve formulário preenchível
-    const fallback = mockAnalyzeReceipt(params.fileName || "comprovante");
-    return { ...fallback, message: undefined, source: "ai", confidence: 0.35 };
+    const msg = err instanceof Error ? err.message : String(err);
+    const lower = msg.toLowerCase();
+    let hint =
+      "Não foi possível ler o comprovante automaticamente. Preencha valor, data e descrição.";
+    if (
+      lower.includes("credit") ||
+      lower.includes("402") ||
+      lower.includes("quota") ||
+      lower.includes("billing")
+    ) {
+      hint =
+        "Créditos da IA esgotados. Preencha os campos manualmente por agora.";
+    }
+    return { ...emptyAnalyzeResult(params.fileName), message: hint };
   }
 }

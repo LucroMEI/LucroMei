@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { analyzeReceipt, mockAnalyzeReceipt } from "@/lib/ai";
+import { analyzeReceipt, emptyAnalyzeResult } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -31,27 +31,8 @@ async function extractPdfText(buf: Buffer): Promise<string> {
 }
 
 function heuristicFromFileName(fileName: string) {
-  const lower = fileName.toLowerCase();
-  if (lower.includes("instagram") || lower.includes("meta")) {
-    return {
-      ...mockAnalyzeReceipt(fileName),
-      amount: 16.99,
-      date: "2026-08-19",
-      type: "despesa" as const,
-      category: "Marketing / Anúncios",
-      description: "Meta Verified Instagram (Google Play)",
-      is_deductible: true,
-      confidence: 0.85,
-      // UI trata como leitura normal (sem faixa amarela de fallback)
-      source: "ai" as const,
-    };
-  }
-  return {
-    ...mockAnalyzeReceipt(fileName),
-    source: "ai" as const,
-    confidence: 0.3,
-    message: undefined,
-  };
+  // Sem inventar valores pelo nome do ficheiro — utilizador preenche
+  return emptyAnalyzeResult(fileName);
 }
 
 async function prepareImageForAi(

@@ -275,9 +275,16 @@ export default function UploadPage() {
         );
       }
 
-      // UX: não expor "mock/fallback" — mesma mensagem profissional
-      applyAi({ ...data, source: "ai" });
-      setError("");
+      applyAi(data);
+      // Se não leu valor, avisa de forma clara (sem jargão técnico)
+      if (data.amount == null || data.confidence === 0) {
+        setError(
+          data.message ||
+            "Não foi possível ler o valor automaticamente. Confira e preencha os campos."
+        );
+      } else {
+        setError("");
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro no upload";
       const low = msg.toLowerCase();
@@ -293,31 +300,17 @@ export default function UploadPage() {
       } else {
         setError(msg);
       }
-      // Abre o formulário para não perder o lançamento
-      const lowerName = file.name.toLowerCase();
-      if (lowerName.includes("instagram") || lowerName.includes("meta")) {
-        applyAi({
-          amount: 16.99,
-          date: "2026-08-19",
-          type: "despesa",
-          category: "Marketing / Anúncios",
-          description: "Meta Verified Instagram (Google Play)",
-          is_deductible: true,
-          confidence: 0.5,
-          source: "ai",
-        });
-      } else {
-        applyAi({
-          amount: null,
-          date: new Date().toISOString().slice(0, 10),
-          type: "despesa",
-          category: "Outras despesas",
-          description: file.name || "Comprovante",
-          is_deductible: true,
-          confidence: 0,
-          source: "ai",
-        });
-      }
+      // Abre formulário vazio para preencher (não usa nome do arquivo como dados)
+      applyAi({
+        amount: null,
+        date: new Date().toISOString().slice(0, 10),
+        type: "despesa",
+        category: "Outras despesas",
+        description: "",
+        is_deductible: true,
+        confidence: 0,
+        source: "mock",
+      });
     } finally {
       setAnalyzing(false);
     }
@@ -795,9 +788,9 @@ export default function UploadPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {aiResult && (
+            {aiResult && aiResult.amount != null && aiResult.confidence > 0 && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-                Confira os campos antes de salvar.
+                Dados lidos do comprovante. Confira antes de salvar.
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
