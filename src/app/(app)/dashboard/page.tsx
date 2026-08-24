@@ -11,7 +11,6 @@ import {
   Landmark,
   Bell,
   CalendarPlus,
-  Repeat,
 } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL, formatDateBR, monthLabel } from "@/lib/format";
@@ -26,10 +25,9 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 
 export default function DashboardPage() {
-  const { ready, monthTx, summary, settings, year, month, recurring, syncError } =
+  const { ready, monthTx, summary, settings, year, month, syncError } =
     useFinance();
   const [calMsg, setCalMsg] = useState("");
-  const activeFixed = recurring.filter((r) => r.active).length;
 
   if (!ready) {
     return (
@@ -72,21 +70,12 @@ export default function DashboardPage() {
             {isMei ? ` · ${settings?.atividade_mei ?? "servicos"}` : ""}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/despesas-fixas">
-            <Button variant="outline">
-              <Repeat className="h-4 w-4" />
-              Despesas fixas
-              {activeFixed > 0 ? ` (${activeFixed})` : ""}
-            </Button>
-          </Link>
-          <Link href="/upload">
-            <Button>
-              <Camera className="h-4 w-4" />
-              Novo comprovante
-            </Button>
-          </Link>
-        </div>
+        <Link href="/upload">
+          <Button>
+            <Camera className="h-4 w-4" />
+            Novo comprovante
+          </Button>
+        </Link>
       </div>
 
       {syncError && (

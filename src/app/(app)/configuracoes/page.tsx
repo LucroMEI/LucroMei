@@ -123,25 +123,6 @@ export default function ConfiguracoesPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Despesas fixas</CardTitle>
-          <CardDescription>
-            Assinaturas e pagamentos mensais (Instagram, hosting, Grok…). Geram
-            sozinhas no dia do vencimento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            onClick={() => router.push("/despesas-fixas")}
-          >
-            Gerir despesas fixas
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Conta no topo no mobile: Sair visível sem rolar */}
       <Card>
         <CardHeader className="pb-2">

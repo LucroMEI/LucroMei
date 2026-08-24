@@ -123,10 +123,10 @@ export default function DespesasFixasPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link
-            href="/configuracoes"
+            href="/transacoes"
             className="text-sm font-medium text-emerald-700 hover:underline"
           >
-            ← Configurações
+            ← Transações
           </Link>
           <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold text-slate-900">
             <Repeat className="h-6 w-6 text-emerald-600" />

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Trash2, Filter } from "lucide-react";
+import Link from "next/link";
+import { Trash2, Filter, Repeat } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL, formatDateBR, monthLabel } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,17 @@ export default function TransacoesPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [typeFilter, setTypeFilter] = useState<"todos" | TransactionType>("todos");
-  const { ready, monthTx, removeTransaction, summary } = useFinance({ year, month });
+  const { ready, monthTx, removeTransaction, summary, recurring } = useFinance({
+    year,
+    month,
+  });
 
   const filtered = useMemo(() => {
     if (typeFilter === "todos") return monthTx;
     return monthTx.filter((t) => t.type === typeFilter);
   }, [monthTx, typeFilter]);
+
+  const activeFixed = recurring.filter((r) => r.active).length;
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Carregando…</p>;
@@ -27,13 +33,34 @@ export default function TransacoesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Transações</h1>
-        <p className="text-sm capitalize text-slate-600">
-          {monthLabel(`${year}-${String(month).padStart(2, "0")}`)} · {filtered.length}{" "}
-          lançamento(s)
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Transações</h1>
+          <p className="text-sm capitalize text-slate-600">
+            {monthLabel(`${year}-${String(month).padStart(2, "0")}`)} ·{" "}
+            {filtered.length} lançamento(s)
+          </p>
+        </div>
       </div>
+
+      <Link href="/despesas-fixas" className="block">
+        <Card className="transition hover:border-emerald-300 hover:bg-emerald-50/40">
+          <CardContent className="flex items-center gap-3 py-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <Repeat className="h-5 w-5" strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-900">Despesas fixas</p>
+              <p className="text-xs text-slate-600">
+                {activeFixed > 0
+                  ? `${activeFixed} ativa${activeFixed === 1 ? "" : "s"} · toque para gerir`
+                  : "Assinaturas e parcelas · toque para cadastrar"}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-emerald-700">Abrir</span>
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card>
         <CardHeader>
