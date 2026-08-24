@@ -411,7 +411,8 @@ export default function UploadPage() {
         return;
       }
 
-      const desc = description || fileName || "Comprovante";
+      // Nunca usar o nome do ficheiro como "empresa" — só se o utilizador escreveu descrição
+      const desc = (description || "").trim() || "Comprovante";
       const ym = yearMonthKey(
         new Date(date.length === 10 ? date + "T12:00:00" : date)
       );

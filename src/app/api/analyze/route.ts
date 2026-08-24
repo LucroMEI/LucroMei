@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import sharp from "sharp";
 import { analyzeReceipt, emptyAnalyzeResult } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 async function extractPdfText(buf: Buffer): Promise<string> {
-  // Import dinâmico: pdf-parse/pdfjs no top-level derruba a rota inteira no Vercel (500 em foto e PDF).
   try {
     const mod = await import("pdf-parse");
     const PDFParse = (mod as { PDFParse?: new (opts: { data: Buffer }) => {
@@ -28,11 +26,6 @@ async function extractPdfText(buf: Buffer): Promise<string> {
     console.error("[analyze] extractPdfText", err);
     return "";
   }
-}
-
-function heuristicFromFileName(fileName: string) {
-  // Sem inventar valores pelo nome do ficheiro — utilizador preenche
-  return emptyAnalyzeResult(fileName);
 }
 
 async function prepareImageForAi(
@@ -57,7 +50,10 @@ async function prepareImageForAi(
     };
   }
 
+  // sharp em import dinâmico — no Vercel o import top-level derrubava a rota (HTML 500)
   try {
+    const sharpMod = await import("sharp");
+    const sharp = sharpMod.default;
     const out = await sharp(buf, { failOn: "none" })
       .rotate()
       .resize({
@@ -74,9 +70,10 @@ async function prepareImageForAi(
     };
   } catch (err) {
     console.error("[analyze] sharp", err);
-    if (buf.byteLength > 3_000_000) {
+    // Sem sharp: envia JPEG/PNG original se couber
+    if (buf.byteLength > 4_000_000) {
       throw new Error(
-        "Não foi possível otimizar esta foto. Use «Tirar foto» (câmera leve do app)."
+        "Não foi possível otimizar esta foto. Tire outra com menos resolução."
       );
     }
     const mimeType = file.type.startsWith("image/") ? file.type : "image/jpeg";
@@ -125,9 +122,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // PDF sem texto extraído → heurística (não 500)
     if (mimeType === "application/pdf" && (!pdfText || pdfText.length < 20)) {
-      return NextResponse.json(heuristicFromFileName(fileName));
+      return NextResponse.json(emptyAnalyzeResult(fileName));
     }
 
     const result = await analyzeReceipt({
@@ -140,14 +136,12 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (err) {
     console.error("[api/analyze]", err);
-    // Nunca devolver HTML 500 genérico para o upload — o formulário continua usável
     const message =
       err instanceof Error ? err.message : "Erro na análise do comprovante";
     return NextResponse.json(
       {
-        ...heuristicFromFileName(fileName),
+        ...emptyAnalyzeResult(fileName),
         message: `${message} Preencha valor e data e salve.`,
-        amount: null,
       },
       { status: 200 }
     );
