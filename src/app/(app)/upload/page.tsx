@@ -232,21 +232,35 @@ export default function UploadPage() {
     try {
       let prepared = file;
 
-      // Em aparelhos com pouca RAM: não decodificar a imagem no browser
-      // (o servidor reduz). Em PC/iPhone: comprimir antes de enviar.
-      if (!lowMem && !isPdf) {
+      // PDF: converter 1ª página → JPEG no browser (na Vercel o PDF falhava)
+      if (isPdf) {
+        try {
+          prepared = await pdfFileToJpeg(file);
+        } catch (e) {
+          console.error("[upload] pdf→jpeg", e);
+          throw new Error(
+            "Não consegui abrir este PDF. Salve como PNG ou tire foto do comprovante."
+          );
+        }
+      } else if (!lowMem) {
+        // Em PC: comprimir foto antes de enviar
         prepared = await prepareUploadFile(file);
       }
 
       if (
-        !lowMem &&
-        (prepared.type.startsWith("image/") || prepared.type === "image/jpeg")
+        prepared.type.startsWith("image/") ||
+        prepared.type === "image/jpeg"
       ) {
-        const url = URL.createObjectURL(prepared);
-        setPreview((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return url;
-        });
+        // Preview também no celular se for JPEG leve vindo do PDF
+        if (!lowMem || isPdf || prepared.size < 900_000) {
+          const url = URL.createObjectURL(prepared);
+          setPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev);
+            return url;
+          });
+        } else {
+          setPreview(null);
+        }
       } else {
         setPreview(null);
       }
@@ -962,6 +976,38 @@ export default function UploadPage() {
       </div>
     </div>
   );
+}
+
+/** Converte a 1ª página do PDF em JPEG no browser (mais fiável que PDF na Vercel). */
+async function pdfFileToJpeg(file: File): Promise<File> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
+  const data = new Uint8Array(await file.arrayBuffer());
+  const doc = await pdfjs.getDocument({ data }).promise;
+  const page = await doc.getPage(1);
+  const base = page.getViewport({ scale: 1 });
+  const scale = Math.min(2.2, 1400 / base.width);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(viewport.width));
+  canvas.height = Math.max(1, Math.floor(viewport.height));
+  const ctx = canvas.getContext("2d", { alpha: false });
+  if (!ctx) throw new Error("Canvas indisponível");
+  // pdfjs v4 tipagens variam — cast para RenderParameters compatível
+  await (
+    page.render({ canvasContext: ctx, viewport } as Parameters<
+      typeof page.render
+    >[0])
+  ).promise;
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b), "image/jpeg", 0.82)
+  );
+  canvas.width = 0;
+  canvas.height = 0;
+  await doc.destroy();
+  if (!blob) throw new Error("Falha ao gerar imagem do PDF");
+  const name = file.name.replace(/\.pdf$/i, "") || "comprovante";
+  return new File([blob], `${name}.jpg`, { type: "image/jpeg" });
 }
 
 /** Galaxy A15 e Androids com pouca RAM (~4 GB ou menos). */
