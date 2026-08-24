@@ -127,56 +127,65 @@ export async function fetchRemoteTransactions(
   userId: string
 ): Promise<Transaction[]> {
   // Tenta schema completo; se falhar (coluna em falta), usa básico
-  let res = await supabase
+  const full = await supabase
     .from("transactions")
     .select(TX_COLS_FULL)
     .eq("user_id", userId)
     .order("date", { ascending: false });
 
-  if (res.error) {
-    console.warn("[finance-sync.fetchTx] full failed:", res.error.message);
-    res = await supabase
-      .from("transactions")
-      .select(TX_COLS_BASIC)
-      .eq("user_id", userId)
-      .order("date", { ascending: false });
+  if (!full.error && full.data) {
+    return full.data.map((r) => rowToTx(r as unknown as Record<string, unknown>));
   }
+  console.warn("[finance-sync.fetchTx] full failed:", full.error?.message);
 
-  if (res.error) {
-    console.error("[finance-sync.fetchTx]", res.error.message);
+  const basic = await supabase
+    .from("transactions")
+    .select(TX_COLS_BASIC)
+    .eq("user_id", userId)
+    .order("date", { ascending: false });
+
+  if (basic.error) {
+    console.error("[finance-sync.fetchTx]", basic.error.message);
     return [];
   }
-  return (res.data || []).map((r) => rowToTx(r as Record<string, unknown>));
+  return (basic.data || []).map((r) =>
+    rowToTx(r as unknown as Record<string, unknown>)
+  );
 }
 
 export async function fetchRemoteRecurring(
   supabase: SupabaseClient,
   userId: string
 ): Promise<RecurringExpense[]> {
-  let res = await supabase
+  const full = await supabase
     .from("recurring_expenses")
     .select(REC_COLS_FULL)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (res.error) {
-    console.warn("[finance-sync.fetchRec] full failed:", res.error.message);
-    // Tabela pode não existir
-    if (/does not exist|schema cache|Could not find the table/i.test(res.error.message)) {
-      return [];
-    }
-    res = await supabase
-      .from("recurring_expenses")
-      .select(REC_COLS_BASIC)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+  if (!full.error && full.data) {
+    return full.data.map((r) => rowToRec(r as unknown as Record<string, unknown>));
   }
 
-  if (res.error) {
-    console.error("[finance-sync.fetchRec]", res.error.message);
+  const msg = full.error?.message || "";
+  console.warn("[finance-sync.fetchRec] full failed:", msg);
+  if (/does not exist|schema cache|Could not find the table/i.test(msg)) {
     return [];
   }
-  return (res.data || []).map((r) => rowToRec(r as Record<string, unknown>));
+
+  const basic = await supabase
+    .from("recurring_expenses")
+    .select(REC_COLS_BASIC)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (basic.error) {
+    console.error("[finance-sync.fetchRec]", basic.error.message);
+    return [];
+  }
+  return (basic.data || []).map((r) =>
+    rowToRec(r as unknown as Record<string, unknown>)
+  );
 }
 
 export async function upsertRemoteTransactions(
