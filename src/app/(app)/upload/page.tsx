@@ -251,22 +251,43 @@ export default function UploadPage() {
         setPreview(null);
       }
 
-      const form = new FormData();
-      form.append("file", prepared, prepared.name || file.name);
+      const sendAnalyze = async () => {
+        const form = new FormData();
+        // Nome simples evita problemas com espaços no multipart
+        const safeName = (prepared.name || file.name || "comprovante.jpg")
+          .replace(/\s+/g, "_")
+          .replace(/[^\w.\-]+/g, "");
+        form.append("file", prepared, safeName || "comprovante.jpg");
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          body: form,
+        });
+        const rawText = await res.text();
+        if (rawText.trim().startsWith("<")) {
+          throw new Error("HTML_500");
+        }
+        return JSON.parse(rawText) as AiReceiptResult;
+      };
 
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        body: form,
-      });
-
-      const rawText = await res.text();
+      // 1ª tentativa + 1 retry (cold start na Vercel às vezes falha na 1ª)
       let data: AiReceiptResult | null = null;
       try {
-        data = JSON.parse(rawText) as AiReceiptResult;
+        data = await sendAnalyze();
       } catch {
-        throw new Error(
-          "Não foi possível ler o comprovante. Confira os campos e salve."
-        );
+        data = null;
+      }
+      if (!data || data.amount == null || data.confidence === 0) {
+        try {
+          await new Promise((r) => setTimeout(r, 800));
+          const retry = await sendAnalyze();
+          if (retry && (retry.amount != null || (data?.amount == null && retry.description))) {
+            data = retry;
+          } else if (!data) {
+            data = retry;
+          }
+        } catch {
+          /* keep first */
+        }
       }
 
       if (!data) {
@@ -276,7 +297,6 @@ export default function UploadPage() {
       }
 
       applyAi(data);
-      // Se não leu valor, avisa de forma clara (sem jargão técnico)
       if (data.amount == null || data.confidence === 0) {
         setError(
           data.message ||
@@ -607,7 +627,9 @@ export default function UploadPage() {
             </div>
 
             {fileName && (
-              <p className="mt-3 text-xs text-slate-500">{fileName}</p>
+              <p className="mt-3 text-xs text-slate-500">
+                Arquivo: {fileName}
+              </p>
             )}
             {error && !cameraOpen && (
               <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
