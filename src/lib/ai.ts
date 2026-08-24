@@ -120,50 +120,59 @@ export function mockAnalyzeReceipt(fileName: string): AiReceiptResult {
 }
 
 /**
- * Analisa comprovante com Grok Vision (xAI).
- * imageBase64 deve incluir data URL ou ser base64 puro + mimeType.
+ * Analisa comprovante com Grok Vision (xAI) ou texto extraído de PDF.
+ * imageBase64: data URL ou base64 puro. pdfText: texto já extraído no servidor.
  */
 export async function analyzeReceipt(params: {
   imageBase64: string;
   mimeType: string;
   fileName?: string;
+  pdfText?: string;
 }): Promise<AiReceiptResult> {
   const client = getClient();
   if (!client) {
     return mockAnalyzeReceipt(params.fileName || "comprovante");
   }
 
-  const dataUrl = params.imageBase64.startsWith("data:")
-    ? params.imageBase64
-    : `data:${params.mimeType};base64,${params.imageBase64}`;
-
-  const isPdf = params.mimeType === "application/pdf" || params.fileName?.toLowerCase().endsWith(".pdf");
+  const isPdf =
+    Boolean(params.pdfText) ||
+    params.mimeType === "application/pdf" ||
+    Boolean(params.fileName?.toLowerCase().endsWith(".pdf"));
 
   try {
-    // Imagens: vision. PDF: tenta enviar como file data URL; se o modelo falhar, mock.
-    const userContent = isPdf
-      ? ([
+    // PDF → análise por TEXTO (vision não aceita PDF de forma fiável)
+    if (isPdf && params.pdfText) {
+      const response = await client.chat.completions.create({
+        model: "grok-4.5",
+        temperature: 0.1,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
           {
-            type: "text" as const,
-            text: `Analise este comprovante em PDF (${params.fileName || "comprovante.pdf"}). Extraia valor, data, tipo, categoria em JSON. Se não conseguir ler o PDF, devolva confidence baixa e amount null.`,
-          },
-          // Alguns modelos aceitam image_url com data:application/pdf — se falhar, cai no catch
-          {
-            type: "image_url" as const,
-            image_url: { url: dataUrl, detail: "high" as const },
-          },
-        ] as const)
-      : ([
-          {
-            type: "text" as const,
-            text: "Analise este comprovante (foto) e retorne o JSON pedido com valor, data, tipo e categoria reais lidos da imagem.",
-          },
-          {
-            type: "image_url" as const,
-            image_url: { url: dataUrl, detail: "high" as const },
-          },
-        ] as const);
+            role: "user",
+            content: `Analise este comprovante/fatura em texto (extraído de PDF "${params.fileName || "comprovante.pdf"}").
+Se o valor estiver em EUR (€), converta para BRL aproximado usando ~6,0 BRL por 1 EUR e indique na description que era €.
+Extraia amount, date, type, category em JSON.
 
+--- TEXTO DO PDF ---
+${params.pdfText.slice(0, 10000)}
+--- FIM ---`,
+          },
+        ],
+      });
+      const text = response.choices[0]?.message?.content || "{}";
+      const parsed = parseJsonLoose(text) as Record<string, unknown>;
+      return normalizeResult(parsed);
+    }
+
+    if (!params.imageBase64) {
+      throw new Error("Imagem vazia para análise");
+    }
+
+    const dataUrl = params.imageBase64.startsWith("data:")
+      ? params.imageBase64
+      : `data:${params.mimeType};base64,${params.imageBase64}`;
+
+    // Só jpeg/png na vision (docs xAI)
     const response = await client.chat.completions.create({
       model: "grok-4.5",
       temperature: 0.1,
@@ -171,7 +180,16 @@ export async function analyzeReceipt(params: {
         { role: "system", content: SYSTEM_PROMPT },
         {
           role: "user",
-          content: [...userContent],
+          content: [
+            {
+              type: "text",
+              text: "Analise este comprovante (foto) e retorne o JSON pedido com valor, data, tipo e categoria reais lidos da imagem. Valores em BRL.",
+            },
+            {
+              type: "image_url",
+              image_url: { url: dataUrl, detail: "high" },
+            },
+          ],
         },
       ],
     });
@@ -183,10 +201,19 @@ export async function analyzeReceipt(params: {
     console.error("[ai.analyzeReceipt]", err);
     const msg = err instanceof Error ? err.message : String(err);
     const lower = msg.toLowerCase();
-    let message = `A chave xAI está configurada, mas a API falhou: ${msg.slice(0, 180)}`;
-    if (lower.includes("credit") || lower.includes("license") || lower.includes("permission-denied")) {
+    let message = `A leitura por IA falhou: ${msg.slice(0, 180)}. Preencha valor e data manualmente.`;
+    if (
+      lower.includes("credit") ||
+      lower.includes("license") ||
+      lower.includes("permission-denied") ||
+      lower.includes("402")
+    ) {
       message =
-        "Chave xAI OK, mas a equipa ainda não tem créditos. Compre créditos em https://console.x.ai (Billing / Credits) e tente de novo. Enquanto isso, preencha valor e categoria manualmente.";
+        "Sem créditos xAI no momento. Preencha valor e categoria manualmente — o lançamento funciona igual.";
+    }
+    if (lower.includes("model") || lower.includes("not found") || lower.includes("404")) {
+      message =
+        "Modelo de visão indisponível no momento. Preencha manualmente ou tente de novo em alguns minutos.";
     }
     const fallback = mockAnalyzeReceipt(params.fileName || "comprovante");
     return { ...fallback, message, source: "mock" };

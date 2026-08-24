@@ -1,14 +1,29 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+import { PDFParse } from "pdf-parse";
 import { analyzeReceipt } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-/** Reduz foto no servidor (Samsung A15 etc. não aguentam fazer isso no browser). */
+async function extractPdfText(buf: Buffer): Promise<string> {
+  const parser = new PDFParse({ data: buf });
+  try {
+    const result = await parser.getText();
+    const pages = (result as { pages?: { text?: string }[] }).pages;
+    if (Array.isArray(pages)) {
+      return pages.map((p) => p.text || "").join("\n").trim();
+    }
+    const text = (result as { text?: string }).text;
+    return (text || "").trim();
+  } finally {
+    await parser.destroy().catch(() => undefined);
+  }
+}
+
 async function prepareImageForAi(
   file: File
-): Promise<{ base64: string; mimeType: string }> {
+): Promise<{ base64: string; mimeType: string; pdfText?: string }> {
   const buf = Buffer.from(await file.arrayBuffer());
   if (buf.byteLength > 12_000_000) {
     throw new Error(
@@ -18,17 +33,30 @@ async function prepareImageForAi(
 
   const isPdf =
     file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
   if (isPdf) {
-    const b64 = buf.toString("base64");
+    // Vision não lê PDF — extraímos texto e a IA analisa o texto.
+    let text = "";
+    try {
+      text = await extractPdfText(buf);
+    } catch (err) {
+      console.error("[analyze] pdf-parse", err);
+    }
+    if (!text || text.length < 20) {
+      throw new Error(
+        "Não consegui ler o texto deste PDF. No computador, abra o PDF e use «Tirar foto» (webcam) da página, ou lance o valor manualmente."
+      );
+    }
     return {
-      base64: `data:application/pdf;base64,${b64}`,
+      base64: "",
       mimeType: "application/pdf",
+      pdfText: text.slice(0, 12000),
     };
   }
 
   try {
     const out = await sharp(buf, { failOn: "none" })
-      .rotate() // respeita EXIF
+      .rotate()
       .resize({
         width: 1280,
         height: 1280,
@@ -42,10 +70,9 @@ async function prepareImageForAi(
       mimeType: "image/jpeg",
     };
   } catch {
-    // Se sharp não ler (ex. HEIC raro), envia original se for pequeno
     if (buf.byteLength > 3_000_000) {
       throw new Error(
-        "Não foi possível otimizar esta foto. Tire de novo pela câmera do app (modo leve)."
+        "Não foi possível otimizar esta foto. Use «Tirar foto» (câmera leve do app)."
       );
     }
     const mimeType = file.type || "image/jpeg";
@@ -60,9 +87,10 @@ export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") || "";
 
-    let imageBase64: string | undefined;
-    let mimeType: string | undefined;
+    let imageBase64 = "";
+    let mimeType = "image/jpeg";
     let fileName: string | undefined;
+    let pdfText: string | undefined;
 
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
@@ -77,29 +105,31 @@ export async function POST(request: Request) {
       const converted = await prepareImageForAi(file);
       imageBase64 = converted.base64;
       mimeType = converted.mimeType;
+      pdfText = converted.pdfText;
     } else {
       const body = await request.json();
-      imageBase64 = body.imageBase64 as string | undefined;
-      mimeType = body.mimeType as string | undefined;
+      imageBase64 = (body.imageBase64 as string) || "";
+      mimeType = (body.mimeType as string) || "image/jpeg";
       fileName = body.fileName as string | undefined;
+      pdfText = body.pdfText as string | undefined;
 
-      if (!imageBase64 || !mimeType) {
+      if (!imageBase64 && !pdfText) {
         return NextResponse.json(
-          { error: "imageBase64 e mimeType são obrigatórios" },
+          { error: "Envie uma imagem ou PDF" },
           { status: 400 }
         );
       }
 
-      // Limite simples ~8MB base64
       if (imageBase64.length > 11_000_000) {
         return NextResponse.json({ error: "Arquivo muito grande" }, { status: 413 });
       }
     }
 
     const result = await analyzeReceipt({
-      imageBase64: imageBase64!,
-      mimeType: mimeType!,
+      imageBase64,
+      mimeType,
       fileName,
+      pdfText,
     });
 
     return NextResponse.json(result);

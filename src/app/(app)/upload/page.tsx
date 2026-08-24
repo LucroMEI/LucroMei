@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Camera,
   FileUp,
-  ImageIcon,
   Loader2,
   Sparkles,
   Check,
@@ -333,10 +332,11 @@ export default function UploadPage() {
         onChange={onPick}
         disabled={analyzing}
       />
+      {/* Só PDF — sem câmera no seletor (Windows/Android mostram câmera se aceitar image/*) */}
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept="application/pdf,.pdf"
         className="hidden"
         onChange={onPick}
         disabled={analyzing}
@@ -383,7 +383,8 @@ export default function UploadPage() {
                   Foto do comprovante
                 </p>
                 <p className="mt-1 text-center text-xs text-slate-500">
-                  No celular: abre a câmera · No PC: webcam ou ficheiro
+                  Use «Tirar foto» para a câmera · «PDF» só para ficheiro PDF (sem
+                  câmera)
                 </p>
               </>
             )}
@@ -405,8 +406,8 @@ export default function UploadPage() {
                 disabled={analyzing}
                 onClick={() => galleryInputRef.current?.click()}
               >
-                <ImageIcon className="h-4 w-4" />
-                Galeria / PDF
+                <FileUp className="h-4 w-4" />
+                PDF
               </Button>
             </div>
 
