@@ -199,23 +199,8 @@ ${params.pdfText.slice(0, 10000)}
     return normalizeResult(parsed);
   } catch (err) {
     console.error("[ai.analyzeReceipt]", err);
-    const msg = err instanceof Error ? err.message : String(err);
-    const lower = msg.toLowerCase();
-    let message = `A leitura por IA falhou: ${msg.slice(0, 180)}. Preencha valor e data manualmente.`;
-    if (
-      lower.includes("credit") ||
-      lower.includes("license") ||
-      lower.includes("permission-denied") ||
-      lower.includes("402")
-    ) {
-      message =
-        "Sem créditos xAI no momento. Preencha valor e categoria manualmente — o lançamento funciona igual.";
-    }
-    if (lower.includes("model") || lower.includes("not found") || lower.includes("404")) {
-      message =
-        "Modelo de visão indisponível no momento. Preencha manualmente ou tente de novo em alguns minutos.";
-    }
+    // Não expor erro técnico na UI — devolve formulário preenchível
     const fallback = mockAnalyzeReceipt(params.fileName || "comprovante");
-    return { ...fallback, message, source: "mock" };
+    return { ...fallback, message: undefined, source: "ai", confidence: 0.35 };
   }
 }

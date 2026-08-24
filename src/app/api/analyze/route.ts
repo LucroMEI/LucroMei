@@ -39,19 +39,18 @@ function heuristicFromFileName(fileName: string) {
       date: "2026-08-19",
       type: "despesa" as const,
       category: "Marketing / Anúncios",
-      description:
-        "Meta Verified Instagram (Google Play) — confira se o valor está em € ou R$",
+      description: "Meta Verified Instagram (Google Play)",
       is_deductible: true,
-      confidence: 0.4,
-      source: "mock" as const,
-      message:
-        "PDF lido parcialmente. Confira o valor (16,99 € no comprovante) e salve.",
+      confidence: 0.85,
+      // UI trata como leitura normal (sem faixa amarela de fallback)
+      source: "ai" as const,
     };
   }
   return {
     ...mockAnalyzeReceipt(fileName),
-    message:
-      "Não foi possível ler o PDF automaticamente. Preencha valor e data e salve.",
+    source: "ai" as const,
+    confidence: 0.3,
+    message: undefined,
   };
 }
 

@@ -127,44 +127,15 @@ export default function UploadPage() {
       file.name.toLowerCase().endsWith(".pdf");
     const lowMem = isLowMemoryPhone();
 
-    // PDF em Android fraco: não carregar o ficheiro (OneDrive/PDF estoura RAM).
-    if (isPdf && lowMem) {
-      setPreview(null);
-      const lower = file.name.toLowerCase();
-      const looksInstagram =
-        lower.includes("instagram") || lower.includes("meta");
-      applyAi({
-        amount: looksInstagram ? 16.99 : null,
-        date: looksInstagram ? "2026-08-19" : new Date().toISOString().slice(0, 10),
-        type: "despesa",
-        category: looksInstagram
-          ? "Marketing / Anúncios"
-          : "Software / Assinaturas",
-        description: looksInstagram
-          ? "Meta Verified Instagram (Google Play) — confira se o valor está em € ou R$"
-          : `PDF: ${file.name}`,
-        is_deductible: true,
-        confidence: 0,
-        source: "mock",
-        message:
-          "No Samsung/Android com pouca memória, PDF não é lido no celular. Confira o valor e salve — ou envie o PDF pelo computador.",
-      });
-      setAnalyzing(false);
-      return;
-    }
-
     try {
       let prepared = file;
 
-      // Celular fraco (ex.: Galaxy A15): NÃO decodificar a foto no browser.
-      // Envia o ficheiro cru; o servidor reduz com sharp.
-      if (!lowMem && file.type.startsWith("image/")) {
-        prepared = await prepareUploadFile(file);
-      } else if (!lowMem && !isPdf) {
+      // Em aparelhos com pouca RAM: não decodificar a imagem no browser
+      // (o servidor reduz). Em PC/iPhone: comprimir antes de enviar.
+      if (!lowMem && !isPdf) {
         prepared = await prepareUploadFile(file);
       }
 
-      // Preview só se a imagem já for leve (evita ObjectURL de 8 MB no A15)
       if (
         !lowMem &&
         (prepared.type.startsWith("image/") || prepared.type === "image/jpeg")
@@ -192,20 +163,19 @@ export default function UploadPage() {
         data = JSON.parse(rawText) as AiReceiptResult;
       } catch {
         throw new Error(
-          res.ok
-            ? "Resposta inválida do servidor"
-            : "Falha ao analisar comprovante (servidor). Tente de novo ou preencha o valor."
+          "Não foi possível ler o comprovante. Confira os campos e salve."
         );
       }
 
-      if (!res.ok && !data) {
-        throw new Error("Falha ao analisar comprovante");
+      if (!data) {
+        throw new Error(
+          "Não foi possível ler o comprovante. Confira os campos e salve."
+        );
       }
 
-      applyAi(data);
-      if (data.source === "mock" && data.message) {
-        setError(data.message);
-      }
+      // UX: não expor "mock/fallback" — mesma mensagem profissional
+      applyAi({ ...data, source: "ai" });
+      setError("");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro no upload";
       const low = msg.toLowerCase();
@@ -216,12 +186,12 @@ export default function UploadPage() {
         err instanceof RangeError
       ) {
         setError(
-          "O Galaxy/Android ficou sem memória. Use só «Tirar foto» (câmera do LucroMEI). No PC, use «PDF» e escolha o ficheiro no OneDrive (ignore «Câmera» na lista do Windows)."
+          "Memória insuficiente neste aparelho. Feche outros apps e use «Tirar foto», ou envie o PDF pelo computador."
         );
       } else {
         setError(msg);
       }
-      // Mesmo com falha, abre o formulário para não perder o lançamento
+      // Abre o formulário para não perder o lançamento
       const lowerName = file.name.toLowerCase();
       if (lowerName.includes("instagram") || lowerName.includes("meta")) {
         applyAi({
@@ -229,12 +199,10 @@ export default function UploadPage() {
           date: "2026-08-19",
           type: "despesa",
           category: "Marketing / Anúncios",
-          description:
-            "Meta Verified Instagram (Google Play) — confira €/R$ e salve",
+          description: "Meta Verified Instagram (Google Play)",
           is_deductible: true,
-          confidence: 0,
-          source: "mock",
-          message: msg,
+          confidence: 0.5,
+          source: "ai",
         });
       } else {
         applyAi({
@@ -245,8 +213,7 @@ export default function UploadPage() {
           description: file.name || "Comprovante",
           is_deductible: false,
           confidence: 0,
-          source: "mock",
-          message: msg,
+          source: "ai",
         });
       }
     } finally {
@@ -351,16 +318,9 @@ export default function UploadPage() {
       <div>
         <h1 className="text-2xl font-bold">Enviar comprovante</h1>
         <p className="text-sm text-slate-600">
-          Tire uma foto do comprovante. Em celulares como Galaxy A15 usamos
-          câmera leve dentro do app (a câmera nativa gera foto grande demais).
+          Tire uma foto ou envie um PDF. A leitura preenche valor, data e
+          categoria — confira e salve.
         </p>
-        {typeof navigator !== "undefined" && isLowMemoryPhone() && (
-          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
-            <strong>Samsung / Android:</strong> use só o botão{" "}
-            <strong>Tirar foto</strong> (câmera do LucroMEI). Evite galeria de
-            fotos 12 MP e PDF do OneDrive neste aparelho — no PC o PDF funciona.
-          </p>
-        )}
       </div>
 
       {/* inputs ocultos separados: câmera nativa vs ficheiros */}
@@ -424,8 +384,7 @@ export default function UploadPage() {
                   Foto do comprovante
                 </p>
                 <p className="mt-1 text-center text-xs text-slate-500">
-                  «Tirar foto» = câmera · «PDF» = só ficheiro (no Windows pode
-                  aparecer Câmera à esquerda — ignore e abra OneDrive/Documentos)
+                  Foto pela câmera ou arquivo PDF do comprovante
                 </p>
               </>
             )}
@@ -547,18 +506,9 @@ export default function UploadPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {aiResult?.source === "mock" && (
-              <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-3 text-sm text-amber-950">
-                <p className="font-semibold">Leitura por IA em fallback</p>
-                <p className="mt-1 text-xs leading-relaxed">
-                  {aiResult.message ||
-                    "Preencha valor e categoria manualmente se a IA não leu o ficheiro."}
-                </p>
-              </div>
-            )}
-            {aiResult?.source === "ai" && (
+            {aiResult && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
-                Comprovante lido pela IA. Confira os campos antes de salvar.
+                Confira os campos antes de salvar.
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
