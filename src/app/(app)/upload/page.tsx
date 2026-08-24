@@ -68,8 +68,8 @@ export default function UploadPage() {
         audio: false,
         video: {
           facingMode: { ideal: facing },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       });
       streamRef.current = stream;
@@ -154,17 +154,24 @@ export default function UploadPage() {
     }
 
     try {
-      // Fotos grandes: comprimir antes. Envio via FormData (sem base64 no JS).
+      // Foto: reduzir ANTES de enviar (senão o celular estoura memória).
       const prepared = await prepareUploadFile(file);
-      if (prepared.type.startsWith("image/")) {
+      if (prepared.type.startsWith("image/") || prepared.type === "image/jpeg") {
         const url = URL.createObjectURL(prepared);
-        setPreview(url);
+        setPreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return url;
+        });
       } else {
         setPreview(null);
       }
 
       const form = new FormData();
-      form.append("file", prepared, file.name);
+      form.append(
+        "file",
+        prepared,
+        prepared.name || file.name.replace(/\.\w+$/, "") + ".jpg"
+      );
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -188,20 +195,8 @@ export default function UploadPage() {
         err instanceof RangeError
       ) {
         setError(
-          "O celular ficou sem memória ao processar o ficheiro. Use «Lançar manualmente sem comprovante» e preencha valor e data. Em fotos, tente qualidade média."
+          "Ainda ficou pesado para este celular. Feche outros apps, tire a foto de novo (só a parte do valor/data, de perto) e tente outra vez. O app já reduz a imagem automaticamente — atualize a página (Ctrl+F5) se o site ainda for a versão antiga."
         );
-        // Abre o formulário manual mesmo assim
-        applyAi({
-          amount: null,
-          date: new Date().toISOString().slice(0, 10),
-          type: "despesa",
-          category: "Outras despesas",
-          description: file.name || "Comprovante",
-          is_deductible: false,
-          confidence: 0,
-          source: "mock",
-          message: "Preencha o valor manualmente — o ficheiro não pôde ser analisado.",
-        });
       } else {
         setError(msg);
       }
@@ -230,12 +225,15 @@ export default function UploadPage() {
       setCameraError("Aguarde a imagem da câmera aparecer e tente de novo.");
       return;
     }
+    // Captura já em tamanho leve (máx. 1280 no lado maior)
+    const maxSide = 1280;
+    const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+    canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
       (blob) => {
         if (!blob) {
@@ -248,7 +246,7 @@ export default function UploadPage() {
         void processFile(file);
       },
       "image/jpeg",
-      0.92
+      0.7
     );
   };
 
@@ -300,7 +298,8 @@ export default function UploadPage() {
       <div>
         <h1 className="text-2xl font-bold">Enviar comprovante</h1>
         <p className="text-sm text-slate-600">
-          Tire uma foto, escolha da galeria ou envie PDF — a IA categoriza.
+          Tire uma foto do comprovante — o app reduz a imagem sozinho para não
+          sobrecarregar o celular. Também dá para usar a galeria.
         </p>
       </div>
 
@@ -342,7 +341,10 @@ export default function UploadPage() {
               <>
                 <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
                 <p className="mt-3 text-sm font-medium text-slate-700">
-                  IA lendo o comprovante…
+                  Otimizando a foto e lendo o comprovante…
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Pode levar alguns segundos no celular
                 </p>
               </>
             ) : preview ? (
@@ -626,40 +628,88 @@ export default function UploadPage() {
   );
 }
 
-/** Reduz foto grande (celular) para caber na análise sem estourar memória. PDF passa intacto. */
+/**
+ * Reduz foto de celular ANTES da análise.
+ * Usa resize no decode (quando o browser permite) para não carregar 12 MP na RAM.
+ * Se falhar, tenta tamanhos cada vez menores.
+ */
 async function prepareUploadFile(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
-  // Já pequena: não mexer
-  if (file.size > 0 && file.size < 900_000) return file;
+  const looksImage =
+    file.type.startsWith("image/") ||
+    /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name) ||
+    !file.type; // alguns Android mandam type vazio na câmera
+  if (!looksImage) return file;
+  // Já bem leve
+  if (file.size > 0 && file.size < 450_000 && file.type === "image/jpeg") {
+    return file;
+  }
 
+  const attempts: { maxSide: number; quality: number }[] = [
+    { maxSide: 1280, quality: 0.68 },
+    { maxSide: 1024, quality: 0.58 },
+    { maxSide: 800, quality: 0.5 },
+    { maxSide: 640, quality: 0.45 },
+  ];
+
+  let lastError: unknown;
+  for (const { maxSide, quality } of attempts) {
+    try {
+      const compressed = await compressImageFile(file, maxSide, quality);
+      if (compressed) return compressed;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(
+        "Não foi possível otimizar a foto neste celular. Feche outros apps e tire de novo só o trecho do valor."
+      );
+}
+
+async function compressImageFile(
+  file: File,
+  maxSide: number,
+  quality: number
+): Promise<File | null> {
+  let bitmap: ImageBitmap | null = null;
   try {
-    const bitmap = await createImageBitmap(file);
-    const maxSide = 1600;
+    // Preferir resize no decode (muito menos RAM)
+    try {
+      bitmap = await createImageBitmap(file, {
+        resizeWidth: maxSide,
+        resizeQuality: "low",
+      } as ImageBitmapOptions);
+    } catch {
+      bitmap = await createImageBitmap(file);
+    }
+
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
+
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return null;
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close();
+    bitmap = null;
 
     const blob: Blob | null = await new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.72)
+      canvas.toBlob((b) => resolve(b), "image/jpeg", quality)
     );
-    if (!blob) return file;
+    // Libera canvas da GPU/RAM o quanto antes
+    canvas.width = 0;
+    canvas.height = 0;
+    if (!blob) return null;
 
-    return new File(
-      [blob],
-      file.name.replace(/\.\w+$/, "") + "-compacta.jpg",
-      { type: "image/jpeg" }
-    );
-  } catch {
-    return file;
+    return new File([blob], `comprovante-${Date.now()}.jpg`, {
+      type: "image/jpeg",
+    });
+  } finally {
+    if (bitmap) bitmap.close();
   }
 }
