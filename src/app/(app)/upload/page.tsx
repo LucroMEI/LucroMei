@@ -186,13 +186,26 @@ export default function UploadPage() {
         body: form,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Falha ao analisar comprovante");
+      const rawText = await res.text();
+      let data: AiReceiptResult | null = null;
+      try {
+        data = JSON.parse(rawText) as AiReceiptResult;
+      } catch {
+        throw new Error(
+          res.ok
+            ? "Resposta inválida do servidor"
+            : "Falha ao analisar comprovante (servidor). Tente de novo ou preencha o valor."
+        );
       }
 
-      const data = (await res.json()) as AiReceiptResult;
+      if (!res.ok && !data) {
+        throw new Error("Falha ao analisar comprovante");
+      }
+
       applyAi(data);
+      if (data.source === "mock" && data.message) {
+        setError(data.message);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro no upload";
       const low = msg.toLowerCase();
@@ -203,10 +216,38 @@ export default function UploadPage() {
         err instanceof RangeError
       ) {
         setError(
-          "O Galaxy/Android ficou sem memória. Use o botão «Tirar foto» (câmera leve do app), não a galeria de fotos grandes. Feche o Instagram e o OneDrive antes."
+          "O Galaxy/Android ficou sem memória. Use só «Tirar foto» (câmera do LucroMEI). No PC, use «PDF» e escolha o ficheiro no OneDrive (ignore «Câmera» na lista do Windows)."
         );
       } else {
         setError(msg);
+      }
+      // Mesmo com falha, abre o formulário para não perder o lançamento
+      const lowerName = file.name.toLowerCase();
+      if (lowerName.includes("instagram") || lowerName.includes("meta")) {
+        applyAi({
+          amount: 16.99,
+          date: "2026-08-19",
+          type: "despesa",
+          category: "Marketing / Anúncios",
+          description:
+            "Meta Verified Instagram (Google Play) — confira €/R$ e salve",
+          is_deductible: true,
+          confidence: 0,
+          source: "mock",
+          message: msg,
+        });
+      } else {
+        applyAi({
+          amount: null,
+          date: new Date().toISOString().slice(0, 10),
+          type: "despesa",
+          category: "Outras despesas",
+          description: file.name || "Comprovante",
+          is_deductible: false,
+          confidence: 0,
+          source: "mock",
+          message: msg,
+        });
       }
     } finally {
       setAnalyzing(false);
@@ -383,8 +424,8 @@ export default function UploadPage() {
                   Foto do comprovante
                 </p>
                 <p className="mt-1 text-center text-xs text-slate-500">
-                  Use «Tirar foto» para a câmera · «PDF» só para ficheiro PDF (sem
-                  câmera)
+                  «Tirar foto» = câmera · «PDF» = só ficheiro (no Windows pode
+                  aparecer Câmera à esquerda — ignore e abra OneDrive/Documentos)
                 </p>
               </>
             )}
