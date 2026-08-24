@@ -12,13 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const PRESETS = [
-  { label: "Instagram / Meta", category: "Marketing / Anúncios", day: 19 },
-  { label: "Hosting / Vercel", category: "Software / Assinaturas", day: 1 },
-  { label: "IA / Grok", category: "Software / Assinaturas", day: 1 },
-  { label: "Domínio", category: "Software / Assinaturas", day: 10 },
-];
-
 const emptyForm = {
   description: "",
   amount: "",
@@ -55,23 +48,6 @@ export default function DespesasFixasPage() {
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Carregando…</p>;
-  }
-
-  function applyPreset(p: (typeof PRESETS)[number]) {
-    const yearly = /hosting|domínio|dominio/i.test(p.label);
-    setForm((f) => ({
-      ...f,
-      description: p.label,
-      category: p.category,
-      day_of_month: String(p.day),
-      month_of_year: String(new Date().getMonth() + 1),
-      frequency: yearly ? "yearly" : "monthly",
-      is_deductible: isDeductibleDefault(p.category),
-      active: true,
-      installments_total: "",
-    }));
-    setEditingId(null);
-    setShowForm(true);
   }
 
   function startEdit(r: RecurringExpense) {
@@ -190,20 +166,6 @@ export default function DespesasFixasPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {!editingId && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {PRESETS.map((p) => (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => applyPreset(p)}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-300 hover:bg-emerald-50"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            )}
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="desc">Nome</Label>
