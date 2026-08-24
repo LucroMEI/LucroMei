@@ -649,15 +649,19 @@ export default function UploadPage() {
             </div>
 
             <div className="flex items-center justify-between gap-2 px-4 py-4">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={switchCamera}
-              >
-                <SwitchCamera className="h-4 w-4" />
-                Virar
-              </Button>
+              {videoDevices.length >= 2 ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={switchCamera}
+                >
+                  <SwitchCamera className="h-4 w-4" />
+                  Virar
+                </Button>
+              ) : (
+                <span className="w-[4.5rem]" aria-hidden />
+              )}
               <button
                 type="button"
                 onClick={captureFromWebcam}
@@ -677,7 +681,7 @@ export default function UploadPage() {
                 }}
               >
                 <FileUp className="h-4 w-4" />
-                Ficheiro
+                PDF
               </Button>
             </div>
           </div>
