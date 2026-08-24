@@ -138,10 +138,47 @@ export async function upsertRemoteTransactions(
   const { error } = await supabase.from("transactions").upsert(rows, {
     onConflict: "id",
   });
-  if (error) {
-    console.error("[finance-sync.upsertTx]", error.message);
+  if (!error) return true;
+
+  console.error("[finance-sync.upsertTx]", error.message);
+
+  // Retry: bases antigas rejeitam source=recorrente ou recurring_id
+  const relaxed = rows.map((r) => ({
+    ...r,
+    source:
+      r.source === "recorrente" || r.source === "import" || r.source === "upload"
+        ? r.source === "recorrente"
+          ? "upload"
+          : r.source
+        : "manual",
+    recurring_id: null as string | null,
+  }));
+  // Se o erro for constraint de source, força upload/manual
+  const retryRows = rows.map((r) => ({
+    id: r.id,
+    user_id: r.user_id,
+    date: r.date,
+    amount: r.amount,
+    type: r.type,
+    category: r.category,
+    description: r.description,
+    receipt_url: r.receipt_url,
+    receipt_path: r.receipt_path,
+    ai_confidence: r.ai_confidence,
+    is_deductible: r.is_deductible,
+    notes: r.notes,
+    source: "upload" as const,
+    updated_at: r.updated_at,
+  }));
+
+  const { error: err2 } = await supabase
+    .from("transactions")
+    .upsert(retryRows, { onConflict: "id" });
+  if (err2) {
+    console.error("[finance-sync.upsertTx.retry]", err2.message);
     return false;
   }
+  void relaxed;
   return true;
 }
 
@@ -154,8 +191,29 @@ export async function upsertRemoteRecurring(
   const { error } = await supabase.from("recurring_expenses").upsert(rows, {
     onConflict: "id",
   });
-  if (error) {
-    console.error("[finance-sync.upsertRec]", error.message);
+  if (!error) return true;
+
+  console.error("[finance-sync.upsertRec]", error.message);
+
+  // Tabela pode não existir ainda — não é fatal (dados ficam no aparelho)
+  // Retry sem colunas novas (frequency / parcelas)
+  const basic = items.map((r) => ({
+    id: r.id,
+    user_id: r.user_id,
+    description: r.description,
+    amount: r.amount,
+    day_of_month: r.day_of_month,
+    category: r.category,
+    is_deductible: r.is_deductible,
+    active: r.active,
+    last_generated_ym: r.last_generated_ym,
+    updated_at: new Date().toISOString(),
+  }));
+  const { error: err2 } = await supabase
+    .from("recurring_expenses")
+    .upsert(basic, { onConflict: "id" });
+  if (err2) {
+    console.error("[finance-sync.upsertRec.retry]", err2.message);
     return false;
   }
   return true;

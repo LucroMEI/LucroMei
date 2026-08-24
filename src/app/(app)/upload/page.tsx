@@ -203,11 +203,21 @@ export default function UploadPage() {
 
   const applyAi = (r: AiReceiptResult) => {
     setAiResult(r);
-    setAmount(r.amount != null ? String(r.amount).replace(".", ",") : "");
+    // Sempre 2 casas e vírgula BR (evita "1814" em vez de "18,14")
+    if (r.amount != null && Number.isFinite(r.amount)) {
+      setAmount(
+        r.amount.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      );
+    } else {
+      setAmount("");
+    }
     if (r.date) setDate(r.date);
     setType(r.type);
     setCategory(r.category);
-    setDescription(r.description);
+    setDescription(r.description || "");
     // Despesa: marcado por padrão (negócio). Desmarca só se categoria for pessoal.
     if (r.type === "despesa") {
       setIsDeductible(!/pessoal|saúde|saude/i.test(r.category));
@@ -438,14 +448,16 @@ export default function UploadPage() {
     setError("");
     setRecurringPromptOpen(false);
     try {
-      const amountNum =
-        Number(amount.replace(/\./g, "").replace(",", ".")) || 0;
-      if (amountNum <= 0) {
+      const normalized = amount.trim().replace(/\s/g, "");
+      const amountNum = normalized.includes(",")
+        ? Number(normalized.replace(/\./g, "").replace(",", "."))
+        : Number(normalized.replace(",", "."));
+      if (!Number.isFinite(amountNum) || amountNum <= 0) {
         setError("Informe um valor válido.");
+        setRecurringPromptOpen(true);
         return;
       }
 
-      // Nunca usar o nome do ficheiro como "empresa" — só se o utilizador escreveu descrição
       const desc = (description || "").trim() || "Comprovante";
       const ym = yearMonthKey(
         new Date(date.length === 10 ? date + "T12:00:00" : date)
@@ -494,7 +506,10 @@ export default function UploadPage() {
       }
 
       if (type === "despesa" && mode === "installments") {
-        const n = Math.min(48, Math.max(2, Math.floor(Number(installments) || 2)));
+        const n = Math.min(
+          48,
+          Math.max(2, Math.floor(Number(installments) || 2))
+        );
         const rule = addRecurring({
           description: cleanDesc,
           amount: amountNum,
@@ -532,7 +547,13 @@ export default function UploadPage() {
         source: recurringId ? "recorrente" : "upload",
         recurring_id: recurringId,
       });
-      router.push("/dashboard");
+
+      await new Promise((r) => setTimeout(r, 150));
+      router.push("/transacoes");
+    } catch (e) {
+      console.error("[upload.commitSave]", e);
+      setError("Não foi possível salvar. Tente de novo.");
+      setRecurringPromptOpen(true);
     } finally {
       setSaving(false);
     }

@@ -100,20 +100,32 @@ export function useFinance(month?: { year: number; month: number }) {
           fetchRemoteRecurring(supabase, uid),
         ]);
 
-        const mergedTx = mergeById(localTx, remoteTx);
-        const mergedRec = mergeById(localRec, remoteRec);
+        let mergedTx = mergeById(localTx, remoteTx);
+        let mergedRec = mergeById(localRec, remoteRec);
 
-        // Envia o que só existia no aparelho
-        await upsertRemoteTransactions(supabase, mergedTx);
-        await upsertRemoteRecurring(supabase, mergedRec);
+        const okTx = await upsertRemoteTransactions(supabase, mergedTx);
+        const okRec = await upsertRemoteRecurring(supabase, mergedRec);
 
-        // Fonte da verdade: remoto de novo
-        localTx = await fetchRemoteTransactions(supabase, uid);
-        localRec = await fetchRemoteRecurring(supabase, uid);
+        // Só substitui pelo remoto se o envio correu bem — senão mantém o merge
+        // (evita apagar o que acabou de salvar neste aparelho)
+        if (okTx) {
+          const remoteAgain = await fetchRemoteTransactions(supabase, uid);
+          mergedTx = mergeById(mergedTx, remoteAgain);
+        }
+        if (okRec) {
+          const remoteAgain = await fetchRemoteRecurring(supabase, uid);
+          mergedRec = mergeById(mergedRec, remoteAgain);
+        }
 
+        localTx = mergedTx;
+        localRec = mergedRec;
         saveDemoTransactions(localTx, uid);
         saveDemoRecurring(localRec, uid);
-        setSyncError(null);
+        setSyncError(
+          okTx && okRec
+            ? null
+            : "Sincronização parcial. Os lançamentos deste aparelho foram guardados."
+        );
       } catch (e) {
         console.error("[useFinance.sync]", e);
         setSyncError(
@@ -127,12 +139,16 @@ export function useFinance(month?: { year: number; month: number }) {
     localTx = loadDemoTransactions(uid);
     localRec = loadDemoRecurring(uid);
 
-    // Se gerou algo novo, sobe para o Supabase
+    // Se gerou algo novo, sobe para o Supabase (sem apagar local se falhar)
     if (loggedIn && supabase) {
-      await upsertRemoteTransactions(supabase, localTx);
-      await upsertRemoteRecurring(supabase, localRec);
-      localTx = await fetchRemoteTransactions(supabase, uid);
-      localRec = await fetchRemoteRecurring(supabase, uid);
+      const okTx = await upsertRemoteTransactions(supabase, localTx);
+      const okRec = await upsertRemoteRecurring(supabase, localRec);
+      if (okTx) {
+        localTx = mergeById(localTx, await fetchRemoteTransactions(supabase, uid));
+      }
+      if (okRec) {
+        localRec = mergeById(localRec, await fetchRemoteRecurring(supabase, uid));
+      }
       saveDemoTransactions(localTx, uid);
       saveDemoRecurring(localRec, uid);
     }
