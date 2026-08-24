@@ -110,7 +110,7 @@ export default function TransacoesPage() {
                 <p className="truncate text-sm font-medium">{t.description || t.category}</p>
                 <p className="text-xs text-slate-500">
                   {formatDateBR(t.date)} · {t.category}
-                  {t.is_deductible && " · dedutível"}
+                  {t.is_deductible && " · negócio"}
                   {t.ai_confidence != null && " · IA"}
                 </p>
               </div>

@@ -812,7 +812,14 @@ export default function UploadPage() {
                   onChange={(e) => setIsDeductible(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-emerald-600"
                 />
-                Despesa tipicamente dedutível da atividade
+                <span>
+                  <span className="font-medium text-slate-800">
+                    Gasto do negócio (MEI)
+                  </span>
+                  <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                    Desmarque se for despesa pessoal
+                  </span>
+                </span>
               </label>
             )}
 
