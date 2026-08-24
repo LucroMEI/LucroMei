@@ -64,12 +64,13 @@ export default function UploadPage() {
       return;
     }
     try {
+      const lowMem = isLowMemoryPhone();
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: { ideal: facing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: lowMem ? 960 : 1280 },
+          height: { ideal: lowMem ? 540 : 720 },
         },
       });
       streamRef.current = stream;
@@ -125,10 +126,10 @@ export default function UploadPage() {
     const isPdf =
       file.type === "application/pdf" ||
       file.name.toLowerCase().endsWith(".pdf");
+    const lowMem = isLowMemoryPhone();
 
-    // PDF no celular: NÃO carregar o ficheiro na memória para a IA.
-    // Evita o erro "memória insuficiente" (base64 + JSON estoura RAM fraca).
-    if (isPdf) {
+    // PDF em Android fraco: não carregar o ficheiro (OneDrive/PDF estoura RAM).
+    if (isPdf && lowMem) {
       setPreview(null);
       const lower = file.name.toLowerCase();
       const looksInstagram =
@@ -141,22 +142,34 @@ export default function UploadPage() {
           ? "Marketing / Anúncios"
           : "Software / Assinaturas",
         description: looksInstagram
-          ? "Meta Verified Instagram (Google Play) — confira o valor em R$ se precisar converter de €"
-          : `PDF: ${file.name} — preencha o valor`,
+          ? "Meta Verified Instagram (Google Play) — confira se o valor está em € ou R$"
+          : `PDF: ${file.name}`,
         is_deductible: true,
         confidence: 0,
         source: "mock",
         message:
-          "No celular, PDF abre em modo manual para não estourar a memória. Confira valor e data e salve.",
+          "No Samsung/Android com pouca memória, PDF não é lido no celular. Confira o valor e salve — ou envie o PDF pelo computador.",
       });
       setAnalyzing(false);
       return;
     }
 
     try {
-      // Foto: reduzir ANTES de enviar (senão o celular estoura memória).
-      const prepared = await prepareUploadFile(file);
-      if (prepared.type.startsWith("image/") || prepared.type === "image/jpeg") {
+      let prepared = file;
+
+      // Celular fraco (ex.: Galaxy A15): NÃO decodificar a foto no browser.
+      // Envia o ficheiro cru; o servidor reduz com sharp.
+      if (!lowMem && file.type.startsWith("image/")) {
+        prepared = await prepareUploadFile(file);
+      } else if (!lowMem && !isPdf) {
+        prepared = await prepareUploadFile(file);
+      }
+
+      // Preview só se a imagem já for leve (evita ObjectURL de 8 MB no A15)
+      if (
+        !lowMem &&
+        (prepared.type.startsWith("image/") || prepared.type === "image/jpeg")
+      ) {
         const url = URL.createObjectURL(prepared);
         setPreview((prev) => {
           if (prev) URL.revokeObjectURL(prev);
@@ -167,11 +180,7 @@ export default function UploadPage() {
       }
 
       const form = new FormData();
-      form.append(
-        "file",
-        prepared,
-        prepared.name || file.name.replace(/\.\w+$/, "") + ".jpg"
-      );
+      form.append("file", prepared, prepared.name || file.name);
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -195,7 +204,7 @@ export default function UploadPage() {
         err instanceof RangeError
       ) {
         setError(
-          "Ainda ficou pesado para este celular. Feche outros apps, tire a foto de novo (só a parte do valor/data, de perto) e tente outra vez. O app já reduz a imagem automaticamente — atualize a página (Ctrl+F5) se o site ainda for a versão antiga."
+          "O Galaxy/Android ficou sem memória. Use o botão «Tirar foto» (câmera leve do app), não a galeria de fotos grandes. Feche o Instagram e o OneDrive antes."
         );
       } else {
         setError(msg);
@@ -225,8 +234,8 @@ export default function UploadPage() {
       setCameraError("Aguarde a imagem da câmera aparecer e tente de novo.");
       return;
     }
-    // Captura já em tamanho leve (máx. 1280 no lado maior)
-    const maxSide = 1280;
+    // Captura já em tamanho leve (A15: 960 px)
+    const maxSide = isLowMemoryPhone() ? 960 : 1280;
     const scale = Math.min(1, maxSide / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
@@ -251,7 +260,12 @@ export default function UploadPage() {
   };
 
   const openNativeCamera = () => {
-    // Prefer native capture on phones
+    // Galaxy A15 / Android com pouca RAM: câmera NATIVA gera foto 12 MP e estoura memória.
+    // Nestes aparelhos usamos a câmera leve DENTRO do app (640–960 px).
+    if (isLowMemoryPhone()) {
+      setCameraOpen(true);
+      return;
+    }
     const isMobile =
       typeof navigator !== "undefined" &&
       /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -259,7 +273,6 @@ export default function UploadPage() {
       cameraInputRef.current.click();
       return;
     }
-    // Desktop / others: in-browser webcam
     setCameraOpen(true);
   };
 
@@ -298,9 +311,16 @@ export default function UploadPage() {
       <div>
         <h1 className="text-2xl font-bold">Enviar comprovante</h1>
         <p className="text-sm text-slate-600">
-          Tire uma foto do comprovante — o app reduz a imagem sozinho para não
-          sobrecarregar o celular. Também dá para usar a galeria.
+          Tire uma foto do comprovante. Em celulares como Galaxy A15 usamos
+          câmera leve dentro do app (a câmera nativa gera foto grande demais).
         </p>
+        {typeof navigator !== "undefined" && isLowMemoryPhone() && (
+          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-950">
+            <strong>Samsung / Android:</strong> use só o botão{" "}
+            <strong>Tirar foto</strong> (câmera do LucroMEI). Evite galeria de
+            fotos 12 MP e PDF do OneDrive neste aparelho — no PC o PDF funciona.
+          </p>
+        )}
       </div>
 
       {/* inputs ocultos separados: câmera nativa vs ficheiros */}
@@ -628,10 +648,27 @@ export default function UploadPage() {
   );
 }
 
+/** Galaxy A15 e Androids com pouca RAM (~4 GB ou menos). */
+function isLowMemoryPhone(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  const android = /Android/i.test(ua);
+  const samsungA = /SM-A1[0-9]|Galaxy A1[0-9]|A15/i.test(ua);
+  // deviceMemory is Chrome-only (GiB)
+  const mem =
+    typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory ===
+    "number"
+      ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory!
+      : null;
+  if (samsungA) return true;
+  if (android && mem !== null && mem <= 4) return true;
+  if (android && mem === null) return true; // Android sem API: assume frágil
+  return false;
+}
+
 /**
- * Reduz foto de celular ANTES da análise.
- * Usa resize no decode (quando o browser permite) para não carregar 12 MP na RAM.
- * Se falhar, tenta tamanhos cada vez menores.
+ * Reduz foto de celular ANTES da análise (PCs / iPhones com RAM ok).
+ * No Android fraco NÃO usamos isto — o servidor (sharp) reduz.
  */
 async function prepareUploadFile(file: File): Promise<File> {
   const looksImage =

@@ -1,18 +1,59 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { analyzeReceipt } from "@/lib/ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-async function fileToBase64DataUrl(file: File): Promise<{ base64: string; mimeType: string }> {
-  const mimeType = file.type || "application/octet-stream";
+/** Reduz foto no servidor (Samsung A15 etc. não aguentam fazer isso no browser). */
+async function prepareImageForAi(
+  file: File
+): Promise<{ base64: string; mimeType: string }> {
   const buf = Buffer.from(await file.arrayBuffer());
-  // Limite ~8MB binário (~11MB base64)
-  if (buf.byteLength > 8_000_000) {
-    throw new Error("Arquivo muito grande (máx. ~8 MB). Tire uma foto com qualidade média.");
+  if (buf.byteLength > 12_000_000) {
+    throw new Error(
+      "Arquivo muito grande (máx. ~12 MB). Tire a foto de novo só do comprovante."
+    );
   }
-  const b64 = buf.toString("base64");
-  return { base64: `data:${mimeType};base64,${b64}`, mimeType };
+
+  const isPdf =
+    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+  if (isPdf) {
+    const b64 = buf.toString("base64");
+    return {
+      base64: `data:application/pdf;base64,${b64}`,
+      mimeType: "application/pdf",
+    };
+  }
+
+  try {
+    const out = await sharp(buf, { failOn: "none" })
+      .rotate() // respeita EXIF
+      .resize({
+        width: 1280,
+        height: 1280,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 70, mozjpeg: true })
+      .toBuffer();
+    return {
+      base64: `data:image/jpeg;base64,${out.toString("base64")}`,
+      mimeType: "image/jpeg",
+    };
+  } catch {
+    // Se sharp não ler (ex. HEIC raro), envia original se for pequeno
+    if (buf.byteLength > 3_000_000) {
+      throw new Error(
+        "Não foi possível otimizar esta foto. Tire de novo pela câmera do app (modo leve)."
+      );
+    }
+    const mimeType = file.type || "image/jpeg";
+    return {
+      base64: `data:${mimeType};base64,${buf.toString("base64")}`,
+      mimeType,
+    };
+  }
 }
 
 export async function POST(request: Request) {
@@ -33,7 +74,7 @@ export async function POST(request: Request) {
         );
       }
       fileName = file.name;
-      const converted = await fileToBase64DataUrl(file);
+      const converted = await prepareImageForAi(file);
       imageBase64 = converted.base64;
       mimeType = converted.mimeType;
     } else {
