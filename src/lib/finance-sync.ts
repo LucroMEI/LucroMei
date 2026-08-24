@@ -1,20 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RecurringExpense, Transaction } from "./types";
 
-const TX_COLS =
-  "id, user_id, date, amount, type, category, description, receipt_url, receipt_path, ai_confidence, is_deductible, notes, source, recurring_id, created_at, updated_at";
+/** Colunas compatíveis com o schema antigo (sem recurring_id). */
+const TX_COLS_BASIC =
+  "id, user_id, date, amount, type, category, description, receipt_url, receipt_path, ai_confidence, is_deductible, notes, source, created_at, updated_at";
 
-const REC_COLS =
-  "id, user_id, description, amount, day_of_month, category, is_deductible, active, last_generated_ym, frequency, month_of_year, installments_total, installments_generated, created_at, updated_at";
+const TX_COLS_FULL = TX_COLS_BASIC + ", recurring_id";
+
+const REC_COLS_BASIC =
+  "id, user_id, description, amount, day_of_month, category, is_deductible, active, last_generated_ym, created_at, updated_at";
+
+const REC_COLS_FULL =
+  REC_COLS_BASIC +
+  ", frequency, month_of_year, installments_total, installments_generated";
 
 function scrubReceiptUrl(url: string | null | undefined): string | null {
   if (!url) return null;
-  // blob: e data: não servem noutro aparelho
   if (url.startsWith("blob:") || url.startsWith("data:")) return null;
   return url;
 }
 
-function txToRow(tx: Transaction) {
+function txToRowBasic(tx: Transaction) {
   return {
     id: tx.id,
     user_id: tx.user_id,
@@ -28,9 +34,22 @@ function txToRow(tx: Transaction) {
     ai_confidence: tx.ai_confidence,
     is_deductible: tx.is_deductible,
     notes: tx.notes ?? null,
+    // Bases antigas só aceitam manual|upload|import
+    source:
+      tx.source === "recorrente"
+        ? "upload"
+        : tx.source === "import" || tx.source === "upload" || tx.source === "manual"
+          ? tx.source
+          : "upload",
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function txToRowFull(tx: Transaction) {
+  return {
+    ...txToRowBasic(tx),
     source: tx.source ?? "manual",
     recurring_id: tx.recurring_id ?? null,
-    updated_at: new Date().toISOString(),
   };
 }
 
@@ -56,7 +75,7 @@ function rowToTx(row: Record<string, unknown>): Transaction {
   };
 }
 
-function recToRow(r: RecurringExpense) {
+function recToRowBasic(r: RecurringExpense) {
   return {
     id: r.id,
     user_id: r.user_id,
@@ -67,11 +86,17 @@ function recToRow(r: RecurringExpense) {
     is_deductible: r.is_deductible,
     active: r.active,
     last_generated_ym: r.last_generated_ym,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function recToRowFull(r: RecurringExpense) {
+  return {
+    ...recToRowBasic(r),
     frequency: r.frequency ?? "monthly",
     month_of_year: r.month_of_year ?? null,
     installments_total: r.installments_total ?? null,
     installments_generated: r.installments_generated ?? 0,
-    updated_at: new Date().toISOString(),
   };
 }
 
@@ -101,32 +126,57 @@ export async function fetchRemoteTransactions(
   supabase: SupabaseClient,
   userId: string
 ): Promise<Transaction[]> {
-  const { data, error } = await supabase
+  // Tenta schema completo; se falhar (coluna em falta), usa básico
+  let res = await supabase
     .from("transactions")
-    .select(TX_COLS)
+    .select(TX_COLS_FULL)
     .eq("user_id", userId)
     .order("date", { ascending: false });
-  if (error) {
-    console.error("[finance-sync.fetchTx]", error.message);
+
+  if (res.error) {
+    console.warn("[finance-sync.fetchTx] full failed:", res.error.message);
+    res = await supabase
+      .from("transactions")
+      .select(TX_COLS_BASIC)
+      .eq("user_id", userId)
+      .order("date", { ascending: false });
+  }
+
+  if (res.error) {
+    console.error("[finance-sync.fetchTx]", res.error.message);
     return [];
   }
-  return (data || []).map((r) => rowToTx(r as Record<string, unknown>));
+  return (res.data || []).map((r) => rowToTx(r as Record<string, unknown>));
 }
 
 export async function fetchRemoteRecurring(
   supabase: SupabaseClient,
   userId: string
 ): Promise<RecurringExpense[]> {
-  const { data, error } = await supabase
+  let res = await supabase
     .from("recurring_expenses")
-    .select(REC_COLS)
+    .select(REC_COLS_FULL)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
-  if (error) {
-    console.error("[finance-sync.fetchRec]", error.message);
+
+  if (res.error) {
+    console.warn("[finance-sync.fetchRec] full failed:", res.error.message);
+    // Tabela pode não existir
+    if (/does not exist|schema cache|Could not find the table/i.test(res.error.message)) {
+      return [];
+    }
+    res = await supabase
+      .from("recurring_expenses")
+      .select(REC_COLS_BASIC)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+  }
+
+  if (res.error) {
+    console.error("[finance-sync.fetchRec]", res.error.message);
     return [];
   }
-  return (data || []).map((r) => rowToRec(r as Record<string, unknown>));
+  return (res.data || []).map((r) => rowToRec(r as Record<string, unknown>));
 }
 
 export async function upsertRemoteTransactions(
@@ -134,51 +184,32 @@ export async function upsertRemoteTransactions(
   txs: Transaction[]
 ): Promise<boolean> {
   if (txs.length === 0) return true;
-  const rows = txs.map(txToRow);
-  const { error } = await supabase.from("transactions").upsert(rows, {
+
+  // 1) Schema completo
+  const full = txs.map(txToRowFull);
+  let { error } = await supabase.from("transactions").upsert(full, {
     onConflict: "id",
   });
   if (!error) return true;
+  console.warn("[finance-sync.upsertTx] full failed:", error.message);
 
-  console.error("[finance-sync.upsertTx]", error.message);
-
-  // Retry: bases antigas rejeitam source=recorrente ou recurring_id
-  const relaxed = rows.map((r) => ({
-    ...r,
-    source:
-      r.source === "recorrente" || r.source === "import" || r.source === "upload"
-        ? r.source === "recorrente"
-          ? "upload"
-          : r.source
-        : "manual",
-    recurring_id: null as string | null,
+  // 2) Schema básico (sem recurring_id; source mapeado)
+  const basic = txs.map(txToRowBasic);
+  ({ error } = await supabase.from("transactions").upsert(basic, {
+    onConflict: "id",
   }));
-  // Se o erro for constraint de source, força upload/manual
-  const retryRows = rows.map((r) => ({
-    id: r.id,
-    user_id: r.user_id,
-    date: r.date,
-    amount: r.amount,
-    type: r.type,
-    category: r.category,
-    description: r.description,
-    receipt_url: r.receipt_url,
-    receipt_path: r.receipt_path,
-    ai_confidence: r.ai_confidence,
-    is_deductible: r.is_deductible,
-    notes: r.notes,
-    source: "upload" as const,
-    updated_at: r.updated_at,
-  }));
+  if (!error) return true;
+  console.warn("[finance-sync.upsertTx] basic failed:", error.message);
 
-  const { error: err2 } = await supabase
-    .from("transactions")
-    .upsert(retryRows, { onConflict: "id" });
-  if (err2) {
-    console.error("[finance-sync.upsertTx.retry]", err2.message);
+  // 3) Mínimo absoluto (sem notes)
+  const minimal = basic.map(({ notes: _n, ...rest }) => rest);
+  ({ error } = await supabase.from("transactions").upsert(minimal, {
+    onConflict: "id",
+  }));
+  if (error) {
+    console.error("[finance-sync.upsertTx] minimal failed:", error.message);
     return false;
   }
-  void relaxed;
   return true;
 }
 
@@ -187,33 +218,24 @@ export async function upsertRemoteRecurring(
   items: RecurringExpense[]
 ): Promise<boolean> {
   if (items.length === 0) return true;
-  const rows = items.map(recToRow);
-  const { error } = await supabase.from("recurring_expenses").upsert(rows, {
+
+  const full = items.map(recToRowFull);
+  let { error } = await supabase.from("recurring_expenses").upsert(full, {
     onConflict: "id",
   });
   if (!error) return true;
+  console.warn("[finance-sync.upsertRec] full failed:", error.message);
 
-  console.error("[finance-sync.upsertRec]", error.message);
+  if (/does not exist|schema cache|Could not find the table/i.test(error.message)) {
+    return false; // tabela ainda não criada — não é fatal
+  }
 
-  // Tabela pode não existir ainda — não é fatal (dados ficam no aparelho)
-  // Retry sem colunas novas (frequency / parcelas)
-  const basic = items.map((r) => ({
-    id: r.id,
-    user_id: r.user_id,
-    description: r.description,
-    amount: r.amount,
-    day_of_month: r.day_of_month,
-    category: r.category,
-    is_deductible: r.is_deductible,
-    active: r.active,
-    last_generated_ym: r.last_generated_ym,
-    updated_at: new Date().toISOString(),
+  const basic = items.map(recToRowBasic);
+  ({ error } = await supabase.from("recurring_expenses").upsert(basic, {
+    onConflict: "id",
   }));
-  const { error: err2 } = await supabase
-    .from("recurring_expenses")
-    .upsert(basic, { onConflict: "id" });
-  if (err2) {
-    console.error("[finance-sync.upsertRec.retry]", err2.message);
+  if (error) {
+    console.error("[finance-sync.upsertRec] basic failed:", error.message);
     return false;
   }
   return true;
@@ -254,12 +276,11 @@ export async function deleteRemoteRecurring(
 }
 
 /**
- * Junta local + remoto por id (remote ganha se updated_at mais recente).
+ * Junta local + remoto por id (mais recente por updated_at ganha).
  */
-export function mergeById<T extends { id: string; updated_at?: string; created_at?: string }>(
-  local: T[],
-  remote: T[]
-): T[] {
+export function mergeById<
+  T extends { id: string; updated_at?: string; created_at?: string },
+>(local: T[], remote: T[]): T[] {
   const map = new Map<string, T>();
   for (const item of remote) map.set(item.id, item);
   for (const item of local) {
