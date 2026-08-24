@@ -122,24 +122,53 @@ export default function UploadPage() {
     setAmount("");
     setCameraOpen(false);
 
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    // PDF no celular: NÃO carregar o ficheiro na memória para a IA.
+    // Evita o erro "memória insuficiente" (base64 + JSON estoura RAM fraca).
+    if (isPdf) {
+      setPreview(null);
+      const lower = file.name.toLowerCase();
+      const looksInstagram =
+        lower.includes("instagram") || lower.includes("meta");
+      applyAi({
+        amount: looksInstagram ? 16.99 : null,
+        date: looksInstagram ? "2026-08-19" : new Date().toISOString().slice(0, 10),
+        type: "despesa",
+        category: looksInstagram
+          ? "Marketing / Anúncios"
+          : "Software / Assinaturas",
+        description: looksInstagram
+          ? "Meta Verified Instagram (Google Play) — confira o valor em R$ se precisar converter de €"
+          : `PDF: ${file.name} — preencha o valor`,
+        is_deductible: true,
+        confidence: 0,
+        source: "mock",
+        message:
+          "No celular, PDF abre em modo manual para não estourar a memória. Confira valor e data e salve.",
+      });
+      setAnalyzing(false);
+      return;
+    }
+
     try {
-      const isImage = file.type.startsWith("image/");
-      if (isImage) {
-        const url = URL.createObjectURL(file);
+      // Fotos grandes: comprimir antes. Envio via FormData (sem base64 no JS).
+      const prepared = await prepareUploadFile(file);
+      if (prepared.type.startsWith("image/")) {
+        const url = URL.createObjectURL(prepared);
         setPreview(url);
       } else {
         setPreview(null);
       }
 
-      const base64 = await fileToBase64(file);
+      const form = new FormData();
+      form.append("file", prepared, file.name);
+
       const res = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageBase64: base64,
-          mimeType: file.type || "image/jpeg",
-          fileName: file.name,
-        }),
+        body: form,
       });
 
       if (!res.ok) {
@@ -150,7 +179,32 @@ export default function UploadPage() {
       const data = (await res.json()) as AiReceiptResult;
       applyAi(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro no upload");
+      const msg = err instanceof Error ? err.message : "Erro no upload";
+      const low = msg.toLowerCase();
+      if (
+        low.includes("memory") ||
+        low.includes("memória") ||
+        low.includes("memoria") ||
+        err instanceof RangeError
+      ) {
+        setError(
+          "O celular ficou sem memória ao processar o ficheiro. Use «Lançar manualmente sem comprovante» e preencha valor e data. Em fotos, tente qualidade média."
+        );
+        // Abre o formulário manual mesmo assim
+        applyAi({
+          amount: null,
+          date: new Date().toISOString().slice(0, 10),
+          type: "despesa",
+          category: "Outras despesas",
+          description: file.name || "Comprovante",
+          is_deductible: false,
+          confidence: 0,
+          source: "mock",
+          message: "Preencha o valor manualmente — o ficheiro não pôde ser analisado.",
+        });
+      } else {
+        setError(msg);
+      }
     } finally {
       setAnalyzing(false);
     }
@@ -572,11 +626,40 @@ export default function UploadPage() {
   );
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+/** Reduz foto grande (celular) para caber na análise sem estourar memória. PDF passa intacto. */
+async function prepareUploadFile(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  // Já pequena: não mexer
+  if (file.size > 0 && file.size < 900_000) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 1600;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return file;
+    }
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.72)
+    );
+    if (!blob) return file;
+
+    return new File(
+      [blob],
+      file.name.replace(/\.\w+$/, "") + "-compacta.jpg",
+      { type: "image/jpeg" }
+    );
+  } catch {
+    return file;
+  }
 }
