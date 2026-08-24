@@ -11,7 +11,9 @@ import {
   loadDemoRecurring,
   loadDemoSettings,
   loadDemoTransactions,
+  saveDemoRecurring,
   saveDemoSettings,
+  saveDemoTransactions,
   updateDemoRecurring,
   updateDemoTransaction,
 } from "./demo-store";
@@ -20,6 +22,15 @@ import type { RecurringExpense, Transaction, UserSettings } from "./types";
 import { isSupabaseConfigured, createClient } from "./supabase/client";
 import { ensureUserSettings } from "./user-settings";
 import { canAccessApp } from "./trial";
+import {
+  deleteRemoteRecurring,
+  deleteRemoteTransaction,
+  fetchRemoteRecurring,
+  fetchRemoteTransactions,
+  mergeById,
+  upsertRemoteRecurring,
+  upsertRemoteTransactions,
+} from "./finance-sync";
 
 export function useFinance(month?: { year: number; month: number }) {
   const now = new Date();
@@ -33,19 +44,23 @@ export function useFinance(month?: { year: number; month: number }) {
   const [ready, setReady] = useState(false);
   const [accessBlocked, setAccessBlocked] = useState(false);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     let uid = getDemoUserId();
     let remoteSettings: UserSettings | null = null;
+    let supabase = null as ReturnType<typeof createClient> | null;
+    let loggedIn = false;
 
     if (isSupabaseConfigured()) {
       try {
-        const supabase = createClient();
+        supabase = createClient();
         const {
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
           uid = user.id;
+          loggedIn = true;
           remoteSettings = await ensureUserSettings(supabase, user);
         }
       } catch (e) {
@@ -57,7 +72,6 @@ export function useFinance(month?: { year: number; month: number }) {
 
     if (remoteSettings) {
       setSettings(remoteSettings);
-      // Espelha settings no local para config offline
       saveDemoSettings(remoteSettings, uid);
       const access = canAccessApp(remoteSettings);
       setAccessBlocked(!access.ok);
@@ -66,7 +80,6 @@ export function useFinance(month?: { year: number; month: number }) {
       const local = loadDemoSettings(uid);
       setSettings(local);
       const access = canAccessApp(local);
-      // Em demo sem Supabase, não bloqueia por trial (dev)
       if (isSupabaseConfigured()) {
         setAccessBlocked(!access.ok);
         setDaysLeft(access.daysLeft ?? null);
@@ -76,10 +89,56 @@ export function useFinance(month?: { year: number; month: number }) {
       }
     }
 
-    // Gera despesas fixas devidas ao abrir o app (idempotente)
+    let localTx = loadDemoTransactions(uid);
+    let localRec = loadDemoRecurring(uid);
+
+    // Sync celular ↔ PC quando há login
+    if (loggedIn && supabase) {
+      try {
+        const [remoteTx, remoteRec] = await Promise.all([
+          fetchRemoteTransactions(supabase, uid),
+          fetchRemoteRecurring(supabase, uid),
+        ]);
+
+        const mergedTx = mergeById(localTx, remoteTx);
+        const mergedRec = mergeById(localRec, remoteRec);
+
+        // Envia o que só existia no aparelho
+        await upsertRemoteTransactions(supabase, mergedTx);
+        await upsertRemoteRecurring(supabase, mergedRec);
+
+        // Fonte da verdade: remoto de novo
+        localTx = await fetchRemoteTransactions(supabase, uid);
+        localRec = await fetchRemoteRecurring(supabase, uid);
+
+        saveDemoTransactions(localTx, uid);
+        saveDemoRecurring(localRec, uid);
+        setSyncError(null);
+      } catch (e) {
+        console.error("[useFinance.sync]", e);
+        setSyncError(
+          "Não foi possível sincronizar agora. Os dados deste aparelho continuam disponíveis."
+        );
+      }
+    }
+
+    // Gera despesas fixas devidas (local)
     applyRecurringGeneration(uid, new Date());
-    setTransactions(loadDemoTransactions(uid));
-    setRecurring(loadDemoRecurring(uid));
+    localTx = loadDemoTransactions(uid);
+    localRec = loadDemoRecurring(uid);
+
+    // Se gerou algo novo, sobe para o Supabase
+    if (loggedIn && supabase) {
+      await upsertRemoteTransactions(supabase, localTx);
+      await upsertRemoteRecurring(supabase, localRec);
+      localTx = await fetchRemoteTransactions(supabase, uid);
+      localRec = await fetchRemoteRecurring(supabase, uid);
+      saveDemoTransactions(localTx, uid);
+      saveDemoRecurring(localRec, uid);
+    }
+
+    setTransactions(localTx);
+    setRecurring(localRec);
     setReady(true);
   }, []);
 
@@ -107,27 +166,73 @@ export function useFinance(month?: { year: number; month: number }) {
     [monthTx, yearTx, settings]
   );
 
+  const withRemoteTx = useCallback(
+    async (tx: Transaction) => {
+      if (!isSupabaseConfigured()) return;
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) await upsertRemoteTransactions(supabase, [tx]);
+      } catch (e) {
+        console.error("[useFinance.remoteTx]", e);
+      }
+    },
+    []
+  );
+
+  const withRemoteRec = useCallback(
+    async (item: RecurringExpense) => {
+      if (!isSupabaseConfigured()) return;
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) await upsertRemoteRecurring(supabase, [item]);
+      } catch (e) {
+        console.error("[useFinance.remoteRec]", e);
+      }
+    },
+    []
+  );
+
   const addTransaction = useCallback(
     (partial: Omit<Transaction, "id" | "user_id" | "created_at">) => {
       const tx = addDemoTransaction(partial, userId);
-      void reload();
+      void withRemoteTx(tx).then(() => reload());
       return tx;
     },
-    [reload, userId]
+    [reload, userId, withRemoteTx]
   );
 
   const updateTransaction = useCallback(
     (id: string, patch: Partial<Transaction>) => {
-      updateDemoTransaction(id, patch, userId);
-      void reload();
+      const updated = updateDemoTransaction(id, patch, userId);
+      if (updated) void withRemoteTx(updated).then(() => reload());
+      else void reload();
     },
-    [reload, userId]
+    [reload, userId, withRemoteTx]
   );
 
   const removeTransaction = useCallback(
     (id: string) => {
       deleteDemoTransaction(id, userId);
-      void reload();
+      void (async () => {
+        if (isSupabaseConfigured()) {
+          try {
+            const supabase = createClient();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) await deleteRemoteTransaction(supabase, id, user.id);
+          } catch (e) {
+            console.error("[useFinance.deleteTx]", e);
+          }
+        }
+        await reload();
+      })();
     },
     [reload, userId]
   );
@@ -143,32 +248,45 @@ export function useFinance(month?: { year: number; month: number }) {
       }
     ) => {
       const item = addDemoRecurring(partial, userId);
-      void reload();
+      void withRemoteRec(item).then(() => reload());
       return item;
     },
-    [reload, userId]
+    [reload, userId, withRemoteRec]
   );
 
   const updateRecurring = useCallback(
     (id: string, patch: Partial<RecurringExpense>) => {
-      updateDemoRecurring(id, patch, userId);
-      void reload();
+      const updated = updateDemoRecurring(id, patch, userId);
+      if (updated) void withRemoteRec(updated).then(() => reload());
+      else void reload();
     },
-    [reload, userId]
+    [reload, userId, withRemoteRec]
   );
 
   const removeRecurring = useCallback(
     (id: string) => {
       deleteDemoRecurring(id, userId);
-      void reload();
+      void (async () => {
+        if (isSupabaseConfigured()) {
+          try {
+            const supabase = createClient();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) await deleteRemoteRecurring(supabase, id, user.id);
+          } catch (e) {
+            console.error("[useFinance.deleteRec]", e);
+          }
+        }
+        await reload();
+      })();
     },
     [reload, userId]
   );
 
   const updateSettings = useCallback(
     async (patch: Partial<UserSettings>) => {
-      const current =
-        settings || loadDemoSettings(userId);
+      const current = settings || loadDemoSettings(userId);
       const next = { ...current, ...patch, user_id: userId };
       saveDemoSettings(next, userId);
       setSettings(next);
@@ -215,6 +333,7 @@ export function useFinance(month?: { year: number; month: number }) {
     month: monthNum,
     accessBlocked,
     daysLeft,
+    syncError,
     addTransaction,
     updateTransaction,
     removeTransaction,

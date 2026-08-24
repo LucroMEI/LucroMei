@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 
 export default function DashboardPage() {
-  const { ready, monthTx, summary, settings, year, month, recurring } =
+  const { ready, monthTx, summary, settings, year, month, recurring, syncError } =
     useFinance();
   const [calMsg, setCalMsg] = useState("");
   const activeFixed = recurring.filter((r) => r.active).length;
@@ -88,6 +88,12 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {syncError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          {syncError}
+        </div>
+      )}
 
       {/* Alerta limite MEI */}
       {summary.alerta && (
