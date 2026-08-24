@@ -32,7 +32,8 @@ export default function UploadPage() {
   const [saving, setSaving] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
-  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  // No PC quase não existe câmera "environment" (traseira) — default user evita erro
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("user");
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -58,40 +59,66 @@ export default function UploadPage() {
     stopCamera();
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError(
-        "Este navegador não permite câmera por aqui. No celular, use o botão «Tirar foto»; no PC, use «Galeria / ficheiro» ou outro navegador (Chrome)."
+        "Este navegador não permite câmera. Use o botão «PDF» ou abra no Chrome."
       );
       return;
     }
-    try {
-      const lowMem = isLowMemoryPhone();
-      const stream = await navigator.mediaDevices.getUserMedia({
+
+    const lowMem = isLowMemoryPhone();
+    const attempts: MediaStreamConstraints[] = [
+      {
         audio: false,
         video: {
           facingMode: { ideal: facing },
           width: { ideal: lowMem ? 960 : 1280 },
           height: { ideal: lowMem ? 540 : 720 },
         },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      },
+      // Fallback PC: sem facingMode (evita "Could not start video source")
+      {
+        audio: false,
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+      },
+      { audio: false, video: true },
+    ];
+
+    let lastErr: unknown;
+    for (const constraints of attempts) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setCameraError("");
+        return;
+      } catch (err) {
+        lastErr = err;
+        stopCamera();
       }
-    } catch (err) {
-      const name = err instanceof DOMException ? err.name : "";
-      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-        setCameraError(
-          "Permissão da câmera negada. Autorize a câmera nas definições do navegador e tente de novo."
-        );
-      } else if (name === "NotFoundError") {
-        setCameraError("Nenhuma câmera encontrada neste dispositivo.");
-      } else {
-        setCameraError(
-          err instanceof Error
-            ? err.message
-            : "Não foi possível abrir a câmera. Tente «Galeria / ficheiro»."
-        );
-      }
+    }
+
+    const name = lastErr instanceof DOMException ? lastErr.name : "";
+    const raw =
+      lastErr instanceof Error ? lastErr.message : "Não foi possível abrir a câmera.";
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      setCameraError(
+        "Permissão da câmera negada. No Chrome: ícone de cadeado na barra de endereço → Câmera → Permitir."
+      );
+    } else if (name === "NotFoundError") {
+      setCameraError("Nenhuma câmera encontrada. Use o botão «PDF».");
+    } else if (
+      name === "NotReadableError" ||
+      /could not start video source/i.test(raw)
+    ) {
+      setCameraError(
+        "A câmera está em uso ou indisponível. Feche Teams, Zoom, Skype ou o app Câmera do Windows e tente de novo. Ou use «PDF»."
+      );
+    } else {
+      setCameraError(
+        "Não foi possível abrir a câmera neste computador. Use «PDF» para enviar o comprovante."
+      );
     }
   }, [facingMode, stopCamera]);
 
@@ -267,19 +294,23 @@ export default function UploadPage() {
   };
 
   const openNativeCamera = () => {
-    // Galaxy A15 / Android com pouca RAM: câmera NATIVA gera foto 12 MP e estoura memória.
-    // Nestes aparelhos usamos a câmera leve DENTRO do app (640–960 px).
-    if (isLowMemoryPhone()) {
-      setCameraOpen(true);
-      return;
-    }
     const isMobile =
       typeof navigator !== "undefined" &&
       /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    // Android com pouca RAM: câmera nativa (12 MP) estoura memória → câmera leve no app
+    if (isLowMemoryPhone()) {
+      setFacingMode("environment");
+      setCameraOpen(true);
+      return;
+    }
+    // Celular com RAM ok: câmera nativa
     if (isMobile && cameraInputRef.current) {
       cameraInputRef.current.click();
       return;
     }
+    // PC: webcam frontal (user) — "environment" falha na maioria dos notebooks
+    setFacingMode("user");
     setCameraOpen(true);
   };
 
