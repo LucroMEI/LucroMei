@@ -57,7 +57,10 @@ export default function UploadPage() {
   const [type, setType] = useState<TransactionType>("despesa");
   const [category, setCategory] = useState("Outras despesas");
   const [description, setDescription] = useState("");
-  const [isDeductible, setIsDeductible] = useState(false);
+  // Padrão: gasto do negócio (MEI) marcado — utilizador desmarca se for pessoal
+  const [isDeductible, setIsDeductible] = useState(true);
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [videoDeviceId, setVideoDeviceId] = useState<string | null>(null);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -65,82 +68,138 @@ export default function UploadPage() {
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
-  const startCamera = useCallback(async (facing: "environment" | "user" = facingMode) => {
-    setCameraError("");
-    stopCamera();
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError(
-        "Este navegador não permite câmera. Use o botão «PDF» ou abra no Chrome."
-      );
-      return;
-    }
-
-    const lowMem = isLowMemoryPhone();
-    const attempts: MediaStreamConstraints[] = [
-      {
-        audio: false,
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: lowMem ? 960 : 1280 },
-          height: { ideal: lowMem ? 540 : 720 },
-        },
-      },
-      // Fallback PC: sem facingMode (evita "Could not start video source")
-      {
-        audio: false,
-        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-      },
-      { audio: false, video: true },
-    ];
-
-    let lastErr: unknown;
-    for (const constraints of attempts) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
-        setCameraError("");
+  const startCamera = useCallback(
+    async (opts?: { deviceId?: string | null; facing?: "environment" | "user" }) => {
+      setCameraError("");
+      stopCamera();
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError(
+          "Este navegador não permite câmera. Use o botão «PDF» ou abra no Chrome."
+        );
         return;
-      } catch (err) {
-        lastErr = err;
-        stopCamera();
       }
-    }
 
-    const name = lastErr instanceof DOMException ? lastErr.name : "";
-    const raw =
-      lastErr instanceof Error ? lastErr.message : "Não foi possível abrir a câmera.";
-    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-      setCameraError(
-        "Permissão da câmera negada. No Chrome: ícone de cadeado na barra de endereço → Câmera → Permitir."
+      const lowMem = isLowMemoryPhone();
+      const facing = opts?.facing ?? facingMode;
+      const preferId = opts?.deviceId !== undefined ? opts.deviceId : videoDeviceId;
+
+      const attempts: MediaStreamConstraints[] = [];
+      if (preferId) {
+        attempts.push({
+          audio: false,
+          video: {
+            deviceId: { exact: preferId },
+            width: { ideal: lowMem ? 960 : 1280 },
+            height: { ideal: lowMem ? 540 : 720 },
+          },
+        });
+      }
+      attempts.push(
+        {
+          audio: false,
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: lowMem ? 960 : 1280 },
+            height: { ideal: lowMem ? 540 : 720 },
+          },
+        },
+        {
+          audio: false,
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        },
+        { audio: false, video: true }
       );
-    } else if (name === "NotFoundError") {
-      setCameraError("Nenhuma câmera encontrada. Use o botão «PDF».");
-    } else if (
-      name === "NotReadableError" ||
-      /could not start video source/i.test(raw)
-    ) {
-      setCameraError(
-        "A câmera está em uso ou indisponível. Feche Teams, Zoom, Skype ou o app Câmera do Windows e tente de novo. Ou use «PDF»."
-      );
-    } else {
-      setCameraError(
-        "Não foi possível abrir a câmera neste computador. Use «PDF» para enviar o comprovante."
-      );
-    }
-  }, [facingMode, stopCamera]);
+
+      let lastErr: unknown;
+      for (const constraints of attempts) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          streamRef.current = stream;
+          const track = stream.getVideoTracks()[0];
+          const settingsId = track?.getSettings?.().deviceId;
+          if (settingsId) setVideoDeviceId(settingsId);
+          try {
+            const all = await navigator.mediaDevices.enumerateDevices();
+            setVideoDevices(all.filter((d) => d.kind === "videoinput"));
+          } catch {
+            /* ignore */
+          }
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            await videoRef.current.play();
+          }
+          setCameraError("");
+          return;
+        } catch (err) {
+          lastErr = err;
+          stopCamera();
+        }
+      }
+
+      const name = lastErr instanceof DOMException ? lastErr.name : "";
+      const raw =
+        lastErr instanceof Error
+          ? lastErr.message
+          : "Não foi possível abrir a câmera.";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setCameraError(
+          "Permissão da câmera negada. No Chrome: ícone de cadeado na barra de endereço → Câmera → Permitir."
+        );
+      } else if (name === "NotFoundError") {
+        setCameraError("Nenhuma câmera encontrada. Use o botão «PDF».");
+      } else if (
+        name === "NotReadableError" ||
+        /could not start video source/i.test(raw)
+      ) {
+        setCameraError(
+          "A câmera está em uso ou indisponível. Feche Teams, Zoom, Skype ou o app Câmera do Windows e tente de novo. Ou use «PDF»."
+        );
+      } else {
+        setCameraError(
+          "Não foi possível abrir a câmera neste computador. Use «PDF» para enviar o comprovante."
+        );
+      }
+    },
+    [facingMode, stopCamera, videoDeviceId]
+  );
 
   useEffect(() => {
     if (!cameraOpen) {
       stopCamera();
       return;
     }
-    void startCamera(facingMode);
+    void startCamera();
     return () => stopCamera();
-  }, [cameraOpen, facingMode, startCamera, stopCamera]);
+    // Só reabre ao abrir o modal — troca de câmera chama startCamera direto
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraOpen]);
+
+  const switchCamera = () => {
+    setCameraError("");
+    if (videoDevices.length >= 2) {
+      const ids = videoDevices.map((d) => d.deviceId);
+      const current = videoDeviceId || ids[0];
+      const idx = Math.max(0, ids.indexOf(current));
+      const nextId = ids[(idx + 1) % ids.length];
+      setVideoDeviceId(nextId);
+      void startCamera({ deviceId: nextId });
+      return;
+    }
+    // Uma só câmera no PC: avisa. No celular tenta facingMode.
+    const isMobile =
+      typeof navigator !== "undefined" &&
+      /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (!isMobile) {
+      setCameraError(
+        "Só há uma câmera neste computador — não é possível virar."
+      );
+      return;
+    }
+    const nextFacing = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(nextFacing);
+    setVideoDeviceId(null);
+    void startCamera({ deviceId: null, facing: nextFacing });
+  };
 
   const applyAi = (r: AiReceiptResult) => {
     setAiResult(r);
@@ -149,7 +208,12 @@ export default function UploadPage() {
     setType(r.type);
     setCategory(r.category);
     setDescription(r.description);
-    setIsDeductible(r.is_deductible);
+    // Despesa: marcado por padrão (negócio). Desmarca só se categoria for pessoal.
+    if (r.type === "despesa") {
+      setIsDeductible(!/pessoal|saúde|saude/i.test(r.category));
+    } else {
+      setIsDeductible(false);
+    }
   };
 
   const processFile = useCallback(async (file: File) => {
@@ -249,7 +313,7 @@ export default function UploadPage() {
           type: "despesa",
           category: "Outras despesas",
           description: file.name || "Comprovante",
-          is_deductible: false,
+          is_deductible: true,
           confidence: 0,
           source: "ai",
         });
@@ -596,9 +660,7 @@ export default function UploadPage() {
                 type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() =>
-                  setFacingMode((f) => (f === "environment" ? "user" : "environment"))
-                }
+                onClick={switchCamera}
               >
                 <SwitchCamera className="h-4 w-4" />
                 Virar
@@ -651,17 +713,17 @@ export default function UploadPage() {
                   {
                     id: "monthly" as const,
                     title: "Sim, todo mês",
-                    desc: "Assinatura (Grok, Instagram…) até pausar",
+                    desc: "Assinatura até você pausar",
                   },
                   {
                     id: "installments" as const,
                     title: "Sim, no cartão em parcelas",
-                    desc: "Indique só o número de parcelas (ex. 6× ou 12×)",
+                    desc: "Indique só o número de parcelas",
                   },
                   {
                     id: "yearly" as const,
                     title: "Sim, todo ano",
-                    desc: "Hosting, domínio… valor anual cheio no mês do pagamento",
+                    desc: "Valor anual cheio no mês do pagamento",
                   },
                 ] as const
               ).map((opt) => (
@@ -772,6 +834,7 @@ export default function UploadPage() {
                     setCategory(
                       t === "receita" ? "Vendas / Serviços" : "Outras despesas"
                     );
+                    setIsDeductible(t === "despesa");
                   }}
                 >
                   <option value="despesa">Despesa</option>
@@ -783,7 +846,13 @@ export default function UploadPage() {
                 <Select
                   id="category"
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => {
+                    const cat = e.target.value;
+                    setCategory(cat);
+                    if (type === "despesa") {
+                      setIsDeductible(!/pessoal|saúde|saude/i.test(cat));
+                    }
+                  }}
                 >
                   {categories.map((c) => (
                     <option key={c.name} value={c.name}>
@@ -855,13 +924,14 @@ export default function UploadPage() {
             setAmount("");
             setFileName("");
             setPreview(null);
+            setIsDeductible(true);
             setAiResult({
               amount: null,
               date: new Date().toISOString().slice(0, 10),
               type: "despesa",
               category: "Outras despesas",
               description: "",
-              is_deductible: false,
+              is_deductible: true,
               confidence: 0,
               source: "mock",
             });
