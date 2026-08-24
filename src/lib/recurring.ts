@@ -9,12 +9,34 @@ export function clampDayOfMonth(day: number): number {
   return Math.min(28, Math.max(1, n));
 }
 
+export function clampMonth(month: number): number {
+  const n = Math.floor(Number(month) || 1);
+  return Math.min(12, Math.max(1, n));
+}
+
 export function dueDateForMonth(year: number, month: number, day: number): string {
   const d = clampDayOfMonth(day);
   return `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-function parcelLabel(rule: RecurringExpense, generatedAfterThis: number): string {
+/** Dia 1–28 a partir de uma data ISO YYYY-MM-DD */
+export function dayFromIsoDate(iso: string): number {
+  const parts = iso.split("-");
+  const d = Number(parts[2]) || 1;
+  return clampDayOfMonth(d);
+}
+
+/** Mês 1–12 a partir de ISO YYYY-MM-DD */
+export function monthFromIsoDate(iso: string): number {
+  const parts = iso.split("-");
+  return clampMonth(Number(parts[1]) || 1);
+}
+
+function labelForRule(rule: RecurringExpense, generatedAfterThis: number): string {
+  const freq = rule.frequency ?? "monthly";
+  if (freq === "yearly") {
+    return `${rule.description} (anual)`;
+  }
   const total = rule.installments_total;
   if (total && total > 0) {
     return `${rule.description} (${generatedAfterThis}/${total})`;
@@ -23,9 +45,10 @@ function parcelLabel(rule: RecurringExpense, generatedAfterThis: number): string
 }
 
 /**
- * Gera despesas fixas devidas no mês corrente (idempotente).
- * Regra: se hoje >= dia de vencimento e ainda não gerou neste YM, cria a transação.
- * Parcelas: para de gerar e desativa quando installments_generated >= installments_total.
+ * Gera despesas recorrentes devidas (idempotente).
+ * - monthly: se hoje >= dia e ainda não gerou neste YM
+ * - yearly: só no mês aniversário; valor cheio (não ÷12); 1× por ano
+ * - parcelas: para quando installments_generated >= total
  */
 export function generateDueRecurring(
   rules: RecurringExpense[],
@@ -48,6 +71,39 @@ export function generateDueRecurring(
   for (const rule of nextRules) {
     if (!rule.active) continue;
 
+    const freq = rule.frequency ?? "monthly";
+    const dueDay = clampDayOfMonth(rule.day_of_month);
+
+    if (freq === "yearly") {
+      const annivMonth = clampMonth(rule.month_of_year ?? month);
+      if (month !== annivMonth) continue;
+      if (todayDay < dueDay) continue;
+      // já gerou neste ano-mês aniversário
+      if (rule.last_generated_ym === ym) continue;
+      // se last foi no mesmo mês de outro… ym já cobre o ano
+
+      const already = nextTx.some(
+        (t) =>
+          t.recurring_id === rule.id &&
+          typeof t.date === "string" &&
+          t.date.startsWith(`${year}-`)
+      );
+      if (already) {
+        rule.last_generated_ym = ym;
+        continue;
+      }
+
+      const date = dueDateForMonth(year, annivMonth, dueDay);
+      const tx = buildTx(rule, date, 1);
+      nextTx.unshift(tx);
+      created.push(tx);
+      rule.last_generated_ym = ym;
+      rule.installments_generated = (rule.installments_generated ?? 0) + 1;
+      rule.updated_at = new Date().toISOString();
+      continue;
+    }
+
+    // --- monthly / parcelas ---
     const total = rule.installments_total ?? null;
     const generated = rule.installments_generated ?? 0;
     if (total != null && total > 0 && generated >= total) {
@@ -55,7 +111,6 @@ export function generateDueRecurring(
       continue;
     }
 
-    const dueDay = clampDayOfMonth(rule.day_of_month);
     if (todayDay < dueDay) continue;
     if (rule.last_generated_ym === ym) continue;
 
@@ -72,21 +127,7 @@ export function generateDueRecurring(
 
     const nextCount = generated + 1;
     const date = dueDateForMonth(year, month, dueDay);
-    const tx: Transaction = {
-      id: crypto.randomUUID(),
-      user_id: rule.user_id,
-      date,
-      amount: Number(rule.amount) || 0,
-      type: "despesa",
-      category: rule.category || "Software / Assinaturas",
-      description: parcelLabel(rule, nextCount),
-      receipt_url: null,
-      ai_confidence: null,
-      is_deductible: rule.is_deductible,
-      source: "recorrente",
-      recurring_id: rule.id,
-      created_at: new Date().toISOString(),
-    };
+    const tx = buildTx(rule, date, nextCount);
     nextTx.unshift(tx);
     created.push(tx);
     rule.last_generated_ym = ym;
@@ -100,9 +141,24 @@ export function generateDueRecurring(
   return { transactions: nextTx, rules: nextRules, created };
 }
 
-/** Dia 1–28 a partir de uma data ISO YYYY-MM-DD */
-export function dayFromIsoDate(iso: string): number {
-  const parts = iso.split("-");
-  const d = Number(parts[2]) || 1;
-  return clampDayOfMonth(d);
+function buildTx(
+  rule: RecurringExpense,
+  date: string,
+  generatedAfterThis: number
+): Transaction {
+  return {
+    id: crypto.randomUUID(),
+    user_id: rule.user_id,
+    date,
+    amount: Number(rule.amount) || 0,
+    type: "despesa",
+    category: rule.category || "Software / Assinaturas",
+    description: labelForRule(rule, generatedAfterThis),
+    receipt_url: null,
+    ai_confidence: null,
+    is_deductible: rule.is_deductible,
+    source: "recorrente",
+    recurring_id: rule.id,
+    created_at: new Date().toISOString(),
+  };
 }

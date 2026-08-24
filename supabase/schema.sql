@@ -88,6 +88,8 @@ create table if not exists public.recurring_expenses (
   is_deductible boolean default true,
   active boolean default true,
   last_generated_ym text,
+  frequency text default 'monthly' check (frequency in ('monthly', 'yearly')),
+  month_of_year int check (month_of_year is null or month_of_year between 1 and 12),
   installments_total int,
   installments_generated int default 0,
   created_at timestamptz default now(),

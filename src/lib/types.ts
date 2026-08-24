@@ -30,7 +30,14 @@ export interface Transaction {
   updated_at?: string;
 }
 
-/** Despesa fixa mensal (assinatura) ou parcelada (cartão em N meses) */
+/** Frequência da despesa recorrente */
+export type RecurringFrequency = "monthly" | "yearly";
+
+/**
+ * Despesa recorrente:
+ * - monthly: assinatura todo mês (ou N parcelas no cartão)
+ * - yearly: valor anual cheio 1× por ano (hosting, domínio…) — não divide por 12
+ */
 export interface RecurringExpense {
   id: string;
   user_id: string;
@@ -38,14 +45,19 @@ export interface RecurringExpense {
   amount: number;
   /** Dia do mês 1–28 */
   day_of_month: number;
+  /** Mês do ano 1–12 (obrigatório para yearly; ignorado em monthly) */
+  month_of_year?: number | null;
+  /** monthly (padrão) | yearly */
+  frequency?: RecurringFrequency;
   category: string;
   is_deductible: boolean;
   active: boolean;
-  /** Último mês gerado, ex. "2026-08" — evita regenerar se apagar */
+  /** Último período gerado, ex. "2026-08" — evita regenerar */
   last_generated_ym: string | null;
   /**
-   * null / undefined = todo mês até pausar (assinatura).
-   * número = total de parcelas (ex. 12× no cartão).
+   * Só para cartão/parcelas (frequency monthly):
+   * null = todo mês até pausar.
+   * número = total de parcelas (ex. 6×, 12×).
    */
   installments_total?: number | null;
   /** Quantas vezes já gerou (inclui a 1ª do comprovante) */

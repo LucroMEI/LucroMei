@@ -19,9 +19,13 @@ import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import { useFinance } from "@/lib/use-finance";
 import type { AiReceiptResult, TransactionType } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
-import { dayFromIsoDate, yearMonthKey } from "@/lib/recurring";
+import {
+  dayFromIsoDate,
+  monthFromIsoDate,
+  yearMonthKey,
+} from "@/lib/recurring";
 
-type RecurringPromptMode = "once" | "monthly" | "installments";
+type RecurringPromptMode = "once" | "monthly" | "installments" | "yearly";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -357,12 +361,36 @@ export default function UploadPage() {
       const day = dayFromIsoDate(date);
 
       let recurringId: string | null = null;
+      const cleanDesc = desc
+        .replace(/\s*\(fixa\)\s*$/i, "")
+        .replace(/\s*\(anual\)\s*$/i, "")
+        .replace(/\s*\(\d+\/\d+\)\s*$/i, "")
+        .trim();
 
       if (type === "despesa" && mode === "monthly") {
         const rule = addRecurring({
-          description: desc.replace(/\s*\(fixa\)\s*$/i, "").trim(),
+          description: cleanDesc,
           amount: amountNum,
           day_of_month: day,
+          month_of_year: null,
+          frequency: "monthly",
+          category,
+          is_deductible: isDeductible,
+          active: true,
+          installments_total: null,
+          installments_generated: 1,
+          last_generated_ym: ym,
+        });
+        recurringId = rule.id;
+      }
+
+      if (type === "despesa" && mode === "yearly") {
+        const rule = addRecurring({
+          description: cleanDesc,
+          amount: amountNum,
+          day_of_month: day,
+          month_of_year: monthFromIsoDate(date),
+          frequency: "yearly",
           category,
           is_deductible: isDeductible,
           active: true,
@@ -376,9 +404,11 @@ export default function UploadPage() {
       if (type === "despesa" && mode === "installments") {
         const n = Math.min(48, Math.max(2, Math.floor(Number(installments) || 2)));
         const rule = addRecurring({
-          description: desc.replace(/\s*\(\d+\/\d+\)\s*$/i, "").trim(),
+          description: cleanDesc,
           amount: amountNum,
           day_of_month: day,
+          month_of_year: null,
+          frequency: "monthly",
           category,
           is_deductible: isDeductible,
           active: n > 1,
@@ -394,7 +424,9 @@ export default function UploadPage() {
           ? ` (1/${Math.min(48, Math.max(2, Math.floor(Number(installments) || 2)))})`
           : mode === "monthly"
             ? " (fixa)"
-            : "";
+            : mode === "yearly"
+              ? " (anual)"
+              : "";
 
       addTransaction({
         date,
@@ -605,8 +637,8 @@ export default function UploadPage() {
               Esta despesa se repete?
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Útil para assinaturas e compras no cartão em parcelas — o app
-              lança nos próximos meses sozinho.
+              Para o lucro do mês e o CSV do contador: o valor lançado é o que
+              saiu (anual = valor cheio 1× no ano, não divide por 12).
             </p>
             <div className="mt-4 space-y-2">
               {(
@@ -619,12 +651,17 @@ export default function UploadPage() {
                   {
                     id: "monthly" as const,
                     title: "Sim, todo mês",
-                    desc: "Assinatura fixa até você pausar",
+                    desc: "Assinatura (Grok, Instagram…) até pausar",
                   },
                   {
                     id: "installments" as const,
-                    title: "Sim, em parcelas",
-                    desc: "Ex.: compra no cartão em 6× ou 12×",
+                    title: "Sim, no cartão em parcelas",
+                    desc: "Indique só o número de parcelas (ex. 6× ou 12×)",
+                  },
+                  {
+                    id: "yearly" as const,
+                    title: "Sim, todo ano",
+                    desc: "Hosting, domínio… valor anual cheio no mês do pagamento",
                   },
                 ] as const
               ).map((opt) => (
@@ -645,7 +682,7 @@ export default function UploadPage() {
             </div>
             {recurringMode === "installments" && (
               <div className="mt-4">
-                <Label htmlFor="parcels">Quantas parcelas?</Label>
+                <Label htmlFor="parcels">Número de parcelas</Label>
                 <Input
                   id="parcels"
                   type="number"
@@ -654,6 +691,9 @@ export default function UploadPage() {
                   value={installments}
                   onChange={(e) => setInstallments(e.target.value)}
                 />
+                <p className="mt-1 text-xs text-slate-500">
+                  Cada mês entra 1 parcela com o mesmo valor do comprovante.
+                </p>
               </div>
             )}
             <div className="mt-5 flex flex-col gap-2 sm:flex-row">

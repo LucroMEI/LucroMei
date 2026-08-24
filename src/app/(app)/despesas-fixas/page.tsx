@@ -6,8 +6,8 @@ import { Pause, Play, Plus, Trash2, Pencil, Repeat } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL } from "@/lib/format";
 import { DEFAULT_CATEGORIES, isDeductibleDefault } from "@/lib/categories";
-import { clampDayOfMonth } from "@/lib/recurring";
-import type { RecurringExpense } from "@/lib/types";
+import { clampDayOfMonth, clampMonth } from "@/lib/recurring";
+import type { RecurringExpense, RecurringFrequency } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +23,12 @@ const emptyForm = {
   description: "",
   amount: "",
   day_of_month: "1",
+  month_of_year: String(new Date().getMonth() + 1),
+  frequency: "monthly" as RecurringFrequency,
   category: "Software / Assinaturas",
   is_deductible: true,
   active: true,
-  /** "" = todo mês; número = parcelas */
+  /** "" = assinatura contínua; número = parcelas no cartão */
   installments_total: "",
 };
 
@@ -56,11 +58,14 @@ export default function DespesasFixasPage() {
   }
 
   function applyPreset(p: (typeof PRESETS)[number]) {
+    const yearly = /hosting|domínio|dominio/i.test(p.label);
     setForm((f) => ({
       ...f,
       description: p.label,
       category: p.category,
       day_of_month: String(p.day),
+      month_of_year: String(new Date().getMonth() + 1),
+      frequency: yearly ? "yearly" : "monthly",
       is_deductible: isDeductibleDefault(p.category),
       active: true,
       installments_total: "",
@@ -75,6 +80,8 @@ export default function DespesasFixasPage() {
       description: r.description,
       amount: String(r.amount).replace(".", ","),
       day_of_month: String(r.day_of_month),
+      month_of_year: String(r.month_of_year ?? new Date().getMonth() + 1),
+      frequency: r.frequency ?? "monthly",
       category: r.category,
       is_deductible: r.is_deductible,
       active: r.active,
@@ -99,18 +106,27 @@ export default function DespesasFixasPage() {
     if (!form.description.trim() || amount <= 0) return;
 
     const parcelsRaw = form.installments_total.trim();
-    const parcels = parcelsRaw
-      ? Math.min(48, Math.max(2, Math.floor(Number(parcelsRaw) || 0)))
-      : null;
+    const parcels =
+      form.frequency === "monthly" && parcelsRaw
+        ? Math.min(48, Math.max(2, Math.floor(Number(parcelsRaw) || 0)))
+        : null;
 
     const payload = {
       description: form.description.trim(),
       amount,
       day_of_month: clampDayOfMonth(Number(form.day_of_month)),
+      month_of_year:
+        form.frequency === "yearly"
+          ? clampMonth(Number(form.month_of_year))
+          : null,
+      frequency: form.frequency,
       category: form.category,
       is_deductible: form.is_deductible,
       active: form.active,
-      installments_total: parcels && parcels >= 2 ? parcels : null,
+      installments_total:
+        form.frequency === "monthly" && parcels && parcels >= 2
+          ? parcels
+          : null,
     };
 
     if (editingId) {
@@ -141,8 +157,9 @@ export default function DespesasFixasPage() {
             Despesas fixas
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Assinaturas todo mês ou compras parceladas no cartão. Também pode
-            marcar isso ao salvar um comprovante.
+            Mensal, parcelas no cartão ou anual (valor cheio no mês do
+            pagamento — para o lucro e o CSV do contador). Também no
+            comprovante, ao salvar.
           </p>
         </div>
         <Button
@@ -200,6 +217,24 @@ export default function DespesasFixasPage() {
                   required
                 />
               </div>
+              <div>
+                <Label htmlFor="freq">Frequência</Label>
+                <Select
+                  id="freq"
+                  value={form.frequency}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      frequency: e.target.value as RecurringFrequency,
+                      installments_total:
+                        e.target.value === "yearly" ? "" : f.installments_total,
+                    }))
+                  }
+                >
+                  <option value="monthly">Todo mês (ou parcelas)</option>
+                  <option value="yearly">Todo ano (valor cheio)</option>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="amount">Valor (R$)</Label>
@@ -215,7 +250,7 @@ export default function DespesasFixasPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="day">Dia do mês</Label>
+                  <Label htmlFor="day">Dia</Label>
                   <Input
                     id="day"
                     type="number"
@@ -229,6 +264,40 @@ export default function DespesasFixasPage() {
                   />
                 </div>
               </div>
+              {form.frequency === "yearly" && (
+                <div>
+                  <Label htmlFor="moy">Mês do pagamento</Label>
+                  <Select
+                    id="moy"
+                    value={form.month_of_year}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        month_of_year: e.target.value,
+                      }))
+                    }
+                  >
+                    {[
+                      "Janeiro",
+                      "Fevereiro",
+                      "Março",
+                      "Abril",
+                      "Maio",
+                      "Junho",
+                      "Julho",
+                      "Agosto",
+                      "Setembro",
+                      "Outubro",
+                      "Novembro",
+                      "Dezembro",
+                    ].map((name, i) => (
+                      <option key={name} value={String(i + 1)}>
+                        {name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label htmlFor="cat">Categoria</Label>
                 <Select
@@ -250,27 +319,25 @@ export default function DespesasFixasPage() {
                   ))}
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="parcels">Parcelas (opcional)</Label>
-                <Input
-                  id="parcels"
-                  type="number"
-                  min={2}
-                  max={48}
-                  placeholder="Vazio = todo mês (assinatura)"
-                  value={form.installments_total}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      installments_total: e.target.value,
-                    }))
-                  }
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  Ex.: 12 para compra no cartão em 12×. Deixe vazio se for
-                  assinatura contínua.
-                </p>
-              </div>
+              {form.frequency === "monthly" && (
+                <div>
+                  <Label htmlFor="parcels">Número de parcelas (cartão)</Label>
+                  <Input
+                    id="parcels"
+                    type="number"
+                    min={2}
+                    max={48}
+                    placeholder="Vazio = todo mês até pausar"
+                    value={form.installments_total}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        installments_total: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              )}
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
                   type="checkbox"
@@ -317,14 +384,20 @@ export default function DespesasFixasPage() {
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900">{r.description}</p>
                 <p className="text-sm text-slate-600">
-                  {formatBRL(r.amount)} · todo dia {r.day_of_month} ·{" "}
+                  {formatBRL(r.amount)}
+                  {(r.frequency ?? "monthly") === "yearly"
+                    ? ` · todo ano (mês ${r.month_of_year ?? "?"} dia ${r.day_of_month})`
+                    : ` · todo dia ${r.day_of_month}`}
+                  {" · "}
                   {r.category}
-                  {r.installments_total != null && r.installments_total > 0 && (
-                    <span className="ml-1">
-                      · {r.installments_generated ?? 0}/{r.installments_total}{" "}
-                      parcelas
-                    </span>
-                  )}
+                  {r.installments_total != null &&
+                    r.installments_total > 0 &&
+                    (r.frequency ?? "monthly") === "monthly" && (
+                      <span className="ml-1">
+                        · {r.installments_generated ?? 0}/
+                        {r.installments_total} parcelas
+                      </span>
+                    )}
                   {!r.active && (
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                       Pausada
