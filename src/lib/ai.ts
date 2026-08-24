@@ -158,44 +158,46 @@ export async function analyzeReceipt(params: {
     Boolean(params.fileName?.toLowerCase().endsWith(".pdf"));
 
   try {
-    if (isPdf && params.pdfText && params.pdfText.length >= 20) {
-      const parsed = await chatJson(client, TEXT_MODELS, [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Analise este comprovante/fatura (texto de PDF "${params.fileName || "comprovante.pdf"}").
-NÃO use o nome do arquivo como description — use o que está no texto (ex.: Meta Verified, Hostinger, Stripe).
+    // 1) Texto do PDF (Google Play / Microsoft) — rápido e preciso
+    if (params.pdfText && params.pdfText.length >= 20) {
+      try {
+        const parsed = await chatJson(client, TEXT_MODELS, [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `Analise este comprovante/fatura (texto de PDF "${params.fileName || "comprovante.pdf"}").
+NÃO use o nome do arquivo como description — use o comerciante/serviço do texto
+(Google Play, Meta Verified, Microsoft OneDrive, xAI/Grok, Hostinger, etc.).
 
 --- TEXTO ---
 ${params.pdfText.slice(0, 12000)}
 --- FIM ---`,
-        },
-      ]);
-      return normalizeResult(parsed);
-    }
-
-    if (isPdf && !params.pdfText) {
-      return {
-        ...emptyAnalyzeResult(params.fileName),
-        message:
-          "Não consegui extrair texto deste PDF. Tente foto do comprovante ou preencha manualmente.",
-      };
+          },
+        ]);
+        const result = normalizeResult(parsed);
+        if (result.amount != null && result.amount > 0) return result;
+      } catch (err) {
+        console.error("[ai] pdf text path failed, trying vision", err);
+      }
     }
 
     if (!params.imageBase64) {
-      return emptyAnalyzeResult(params.fileName);
+      return {
+        ...emptyAnalyzeResult(params.fileName),
+        message:
+          "Não consegui ler este PDF. Tente exportar como PNG ou tire foto do comprovante.",
+      };
     }
 
     const dataUrl = params.imageBase64.startsWith("data:")
       ? params.imageBase64
       : `data:${params.mimeType};base64,${params.imageBase64}`;
 
-    // Garantir jpeg/png na data URL
-    const safeUrl =
-      dataUrl.startsWith("data:image/")
-        ? dataUrl
-        : `data:image/jpeg;base64,${params.imageBase64.replace(/^data:[^;]+;base64,/, "")}`;
+    const safeUrl = dataUrl.startsWith("data:image/")
+      ? dataUrl
+      : `data:image/jpeg;base64,${params.imageBase64.replace(/^data:[^;]+;base64,/, "")}`;
 
+    // 2) Visão: foto ou 1ª página do PDF renderizada
     const parsed = await chatJson(client, VISION_MODELS, [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -203,9 +205,9 @@ ${params.pdfText.slice(0, 12000)}
         content: [
           {
             type: "text",
-            text: `Analise este comprovante (foto). Extraia valor, data, tipo e categoria REAIS da imagem.
+            text: `Analise este comprovante (imagem${isPdf ? " de PDF" : ""}). Extraia valor, data, tipo e categoria REAIS.
 NÃO invente com base no nome do arquivo (${params.fileName || "sem nome"}).
-Valores em BRL (converta € se preciso).`,
+Valores em BRL (converta € ou USD se preciso, taxa ~6 BRL/EUR ou ~5,5 BRL/USD).`,
           },
           {
             type: "image_url",
