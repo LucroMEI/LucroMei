@@ -65,13 +65,59 @@ create table if not exists public.transactions (
   ai_confidence numeric(4,3),
   is_deductible boolean default false,
   notes text,
-  source text default 'manual' check (source in ('manual', 'upload', 'import')),
+  source text default 'manual' check (source in ('manual', 'upload', 'import', 'recorrente')),
+  recurring_id uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create index if not exists transactions_user_date_idx on public.transactions(user_id, date desc);
 create index if not exists transactions_user_type_idx on public.transactions(user_id, type);
+create index if not exists transactions_recurring_idx on public.transactions(user_id, recurring_id);
+
+-- ---------------------------
+-- Despesas fixas (recorrentes)
+-- ---------------------------
+create table if not exists public.recurring_expenses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  description text not null,
+  amount numeric(12,2) not null,
+  day_of_month int not null check (day_of_month between 1 and 28),
+  category text not null,
+  is_deductible boolean default true,
+  active boolean default true,
+  last_generated_ym text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists recurring_expenses_user_idx
+  on public.recurring_expenses(user_id, active);
+
+alter table public.recurring_expenses enable row level security;
+
+drop policy if exists "recurring_select" on public.recurring_expenses;
+create policy "recurring_select" on public.recurring_expenses
+  for select to authenticated using (user_id = auth.uid());
+
+drop policy if exists "recurring_insert" on public.recurring_expenses;
+create policy "recurring_insert" on public.recurring_expenses
+  for insert to authenticated with check (user_id = auth.uid());
+
+drop policy if exists "recurring_update" on public.recurring_expenses;
+create policy "recurring_update" on public.recurring_expenses
+  for update to authenticated using (user_id = auth.uid());
+
+drop policy if exists "recurring_delete" on public.recurring_expenses;
+create policy "recurring_delete" on public.recurring_expenses
+  for delete to authenticated using (user_id = auth.uid());
+
+-- Migração em bases já existentes (ignorar erro se já aplicado):
+-- alter table public.transactions drop constraint if exists transactions_source_check;
+-- alter table public.transactions add constraint transactions_source_check
+--   check (source in ('manual', 'upload', 'import', 'recorrente'));
+-- alter table public.transactions add column if not exists recurring_id uuid;
 
 -- ---------------------------
 -- Alertas (DAS, metas, etc.)

@@ -2,16 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  addDemoRecurring,
   addDemoTransaction,
+  applyRecurringGeneration,
+  deleteDemoRecurring,
   deleteDemoTransaction,
   getDemoUserId,
+  loadDemoRecurring,
   loadDemoSettings,
   loadDemoTransactions,
   saveDemoSettings,
+  updateDemoRecurring,
   updateDemoTransaction,
 } from "./demo-store";
 import { filterByMonth, filterByYear, sumReceitas, summarizeMonth } from "./taxes";
-import type { Transaction, UserSettings } from "./types";
+import type { RecurringExpense, Transaction, UserSettings } from "./types";
 import { isSupabaseConfigured, createClient } from "./supabase/client";
 import { ensureUserSettings } from "./user-settings";
 import { canAccessApp } from "./trial";
@@ -23,6 +28,7 @@ export function useFinance(month?: { year: number; month: number }) {
 
   const [userId, setUserId] = useState<string>(getDemoUserId());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [recurring, setRecurring] = useState<RecurringExpense[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [ready, setReady] = useState(false);
   const [accessBlocked, setAccessBlocked] = useState(false);
@@ -70,7 +76,10 @@ export function useFinance(month?: { year: number; month: number }) {
       }
     }
 
+    // Gera despesas fixas devidas ao abrir o app (idempotente)
+    applyRecurringGeneration(uid, new Date());
     setTransactions(loadDemoTransactions(uid));
+    setRecurring(loadDemoRecurring(uid));
     setReady(true);
   }, []);
 
@@ -123,6 +132,36 @@ export function useFinance(month?: { year: number; month: number }) {
     [reload, userId]
   );
 
+  const addRecurring = useCallback(
+    (
+      partial: Omit<
+        RecurringExpense,
+        "id" | "user_id" | "created_at" | "last_generated_ym"
+      >
+    ) => {
+      const item = addDemoRecurring(partial, userId);
+      void reload();
+      return item;
+    },
+    [reload, userId]
+  );
+
+  const updateRecurring = useCallback(
+    (id: string, patch: Partial<RecurringExpense>) => {
+      updateDemoRecurring(id, patch, userId);
+      void reload();
+    },
+    [reload, userId]
+  );
+
+  const removeRecurring = useCallback(
+    (id: string) => {
+      deleteDemoRecurring(id, userId);
+      void reload();
+    },
+    [reload, userId]
+  );
+
   const updateSettings = useCallback(
     async (patch: Partial<UserSettings>) => {
       const current =
@@ -165,6 +204,7 @@ export function useFinance(month?: { year: number; month: number }) {
     ready,
     userId,
     transactions,
+    recurring,
     monthTx,
     summary,
     settings,
@@ -175,6 +215,9 @@ export function useFinance(month?: { year: number; month: number }) {
     addTransaction,
     updateTransaction,
     removeTransaction,
+    addRecurring,
+    updateRecurring,
+    removeRecurring,
     updateSettings,
     reload,
   };

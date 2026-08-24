@@ -23,7 +23,26 @@ export interface Transaction {
   ai_confidence: number | null;
   is_deductible: boolean;
   notes?: string | null;
-  source?: "manual" | "upload" | "import";
+  source?: "manual" | "upload" | "import" | "recorrente";
+  /** Ligação à despesa fixa que gerou este lançamento (anti-duplicata) */
+  recurring_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** Despesa fixa mensal (assinatura, hosting, etc.) */
+export interface RecurringExpense {
+  id: string;
+  user_id: string;
+  description: string;
+  amount: number;
+  /** Dia do mês 1–28 */
+  day_of_month: number;
+  category: string;
+  is_deductible: boolean;
+  active: boolean;
+  /** Último mês gerado, ex. "2026-08" — evita regenerar se apagar */
+  last_generated_ym: string | null;
   created_at?: string;
   updated_at?: string;
 }

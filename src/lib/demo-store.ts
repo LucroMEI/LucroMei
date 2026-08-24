@@ -1,7 +1,8 @@
 "use client";
 
-import type { Transaction, UserSettings } from "./types";
+import type { RecurringExpense, Transaction, UserSettings } from "./types";
 import { defaultTrialEndsAt } from "./trial";
+import { generateDueRecurring } from "./recurring";
 
 const DEMO_USER = "demo-user";
 
@@ -10,6 +11,9 @@ function txKey(userId: string) {
 }
 function settingsKey(userId: string) {
   return `lucromei_settings_v1_${userId}`;
+}
+function recurringKey(userId: string) {
+  return `lucromei_recurring_v1_${userId}`;
 }
 
 function uid() {
@@ -181,7 +185,90 @@ function seedDemoTransactions(userId: string): Transaction[] {
   return seed;
 }
 
+export function loadDemoRecurring(userId: string = DEMO_USER): RecurringExpense[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(recurringKey(userId));
+    if (!raw) return [];
+    return JSON.parse(raw) as RecurringExpense[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveDemoRecurring(
+  list: RecurringExpense[],
+  userId: string = DEMO_USER
+) {
+  localStorage.setItem(recurringKey(userId), JSON.stringify(list));
+}
+
+export function addDemoRecurring(
+  partial: Omit<
+    RecurringExpense,
+    "id" | "user_id" | "created_at" | "last_generated_ym"
+  >,
+  userId: string = DEMO_USER
+): RecurringExpense {
+  const list = loadDemoRecurring(userId);
+  const item: RecurringExpense = {
+    ...partial,
+    id: uid(),
+    user_id: userId,
+    last_generated_ym: null,
+    created_at: new Date().toISOString(),
+  };
+  list.unshift(item);
+  saveDemoRecurring(list, userId);
+  return item;
+}
+
+export function updateDemoRecurring(
+  id: string,
+  patch: Partial<RecurringExpense>,
+  userId: string = DEMO_USER
+) {
+  const list = loadDemoRecurring(userId).map((r) =>
+    r.id === id ? { ...r, ...patch, updated_at: new Date().toISOString() } : r
+  );
+  saveDemoRecurring(list, userId);
+  return list.find((r) => r.id === id);
+}
+
+export function deleteDemoRecurring(id: string, userId: string = DEMO_USER) {
+  saveDemoRecurring(
+    loadDemoRecurring(userId).filter((r) => r.id !== id),
+    userId
+  );
+}
+
+/** Gera despesas fixas devidas e persiste. Devolve quantas criou. */
+export function applyRecurringGeneration(
+  userId: string = DEMO_USER,
+  today: Date = new Date()
+): number {
+  const rules = loadDemoRecurring(userId);
+  const txs = loadDemoTransactions(userId);
+  const { transactions, rules: nextRules, created } = generateDueRecurring(
+    rules,
+    txs,
+    today
+  );
+  if (created.length > 0) {
+    saveDemoTransactions(transactions, userId);
+    saveDemoRecurring(nextRules, userId);
+  } else if (
+    nextRules.some(
+      (r, i) => r.last_generated_ym !== rules[i]?.last_generated_ym
+    )
+  ) {
+    saveDemoRecurring(nextRules, userId);
+  }
+  return created.length;
+}
+
 export function clearDemoData(userId: string = DEMO_USER) {
   localStorage.removeItem(txKey(userId));
   localStorage.removeItem(settingsKey(userId));
+  localStorage.removeItem(recurringKey(userId));
 }
