@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, Pause, Play, Repeat } from "lucide-react";
+import { Pause, Play, Repeat } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -30,30 +30,10 @@ export default function DespesasFixasPage() {
           Despesas fixas
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Aqui só geres o que já é fixo (pausar ou reativar). Para criar uma
-          nova, tira foto ou envia o PDF do comprovante e, ao salvar, indica
-          que é despesa fixa.
+          Aqui só geres o que já é fixo: pausar ou reativar. Novas despesas
+          fixas nascem ao salvar um comprovante (Foto) e indicar que é fixa.
         </p>
       </div>
-
-      <Link href="/upload" className="block">
-        <Card className="border-emerald-200 bg-emerald-50/50 transition hover:border-emerald-300 hover:bg-emerald-50">
-          <CardContent className="flex items-center gap-3 py-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-              <Camera className="h-5 w-5" strokeWidth={2.25} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-slate-800">
-                Nova despesa fixa pela Foto / PDF
-              </p>
-              <p className="text-xs text-slate-500">
-                Ao salvar o comprovante, escolhe mensal, parcelas ou anual
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-emerald-700">Abrir</span>
-          </CardContent>
-        </Card>
-      </Link>
 
       <p className="text-sm text-slate-500">
         {activeCount} ativa{activeCount === 1 ? "" : "s"}
@@ -67,19 +47,9 @@ export default function DespesasFixasPage() {
       <div className="space-y-3">
         {recurring.length === 0 && (
           <Card>
-            <CardContent className="space-y-3 py-8 text-center text-sm text-slate-500">
-              <p>
-                Nenhuma despesa fixa ainda. Fotografa ou envia o PDF da
-                assinatura (Instagram, hosting, etc.) e marca como fixa ao
-                salvar.
-              </p>
-              <Link
-                href="/upload"
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                <Camera className="h-4 w-4" />
-                Ir para Upload
-              </Link>
+            <CardContent className="py-8 text-center text-sm text-slate-500">
+              Nenhuma despesa fixa ainda. Quando salvares um comprovante como
+              fixa, ela aparece aqui.
             </CardContent>
           </Card>
         )}
