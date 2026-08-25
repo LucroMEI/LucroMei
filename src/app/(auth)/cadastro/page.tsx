@@ -102,7 +102,8 @@ export default function CadastroPage() {
           <CardDescription>
             <strong>14 dias grátis</strong> a partir do cadastro ·{" "}
             <strong>sem cartão</strong> · sem cobrança automática. Se gostar, assina
-            por R$ 39,90/mês; se não, encerra o teste e não paga nada.
+            a partir de R$ 19,90/mês (Early Bird) ou R$ 29,90/mês; se não,
+            encerra o teste e não paga nada.
           </CardDescription>
         </CardHeader>
         <CardContent>

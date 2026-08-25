@@ -54,7 +54,7 @@ const plans = [
   },
   {
     name: "Mensal",
-    price: "R$ 39,90",
+    price: "R$ 29,90",
     period: "/mês",
     blurb: "Flexível · cancela quando quiser",
     highlight: false,
@@ -62,9 +62,9 @@ const plans = [
   },
   {
     name: "Anual",
-    price: "R$ 29,90",
+    price: "R$ 24,90",
     period: "/mês",
-    blurb: "Cobrado anualmente · ~25% de desconto",
+    blurb: "Cobrado anualmente · economia vs mensal",
     highlight: false,
     note: "Assinatura após os 14 dias grátis",
   },
@@ -144,8 +144,9 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-4 max-w-lg text-center text-sm font-medium leading-relaxed text-slate-600">
               Crie sua conta e use <strong>14 dias grátis</strong>, sem cartão.
-              Depois, se gostar, assina por <strong>R$ 39,90/mês</strong> — sem
-              gostar, não paga nada.
+              Depois, se gostar, assina a partir de <strong>R$ 19,90/mês</strong>{" "}
+              (Early Bird) ou <strong>R$ 29,90/mês</strong> — sem gostar, não
+              paga nada.
             </p>
 
             <div className="mx-auto mt-8 max-w-md">

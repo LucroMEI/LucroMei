@@ -49,7 +49,8 @@ const faqs: { q: string; a: ReactNode }[] = [
       <>
         Você testa <strong>14 dias grátis</strong>, <strong>sem cartão</strong> e{" "}
         <strong>sem cobrança automática</strong>. Se gostar e quiser continuar, o
-        plano é <strong>R$ 39,90/mês</strong> (há opções anual e early bird quando
+        plano é <strong>R$ 29,90/mês</strong> (há opções anual a R$ 24,90/mês e
+        Early Bird a R$ 19,90 quando
         disponíveis). Se não assinar, não paga nada — só deixa de usar o app após o
         teste. Veja{" "}
         <Link href="/assinatura" className="text-emerald-700 underline">

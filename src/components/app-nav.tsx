@@ -26,7 +26,7 @@ const links = [
 /** Bottom nav mobile: 4 + botão Foto no centro (Config incluído para sair/editar perfil) */
 const mobileLinks = [
   { href: "/dashboard", label: "Início", icon: LayoutDashboard },
-  { href: "/transacoes", label: "Lista", icon: List },
+  { href: "/transacoes", label: "Transações", icon: List },
   { href: "/upload", label: "Foto", icon: Camera, isUpload: true },
   { href: "/assinatura", label: "Plano", icon: CreditCard },
   { href: "/configuracoes", label: "Config", icon: Settings },

@@ -35,13 +35,13 @@ export function priceIdForPlan(plan: CheckoutPlan): string {
 export const PLAN_LABELS: Record<CheckoutPlan, { name: string; price: string; blurb: string }> = {
   monthly: {
     name: "Mensal",
-    price: "R$ 39,90/mês",
+    price: "R$ 29,90/mês",
     blurb: "Upload ilimitado + todas as features",
   },
   yearly: {
     name: "Anual",
-    price: "R$ 29,90/mês",
-    blurb: "Cobrado anualmente — 25% de desconto",
+    price: "R$ 24,90/mês",
+    blurb: "Cobrado anualmente — economia vs mensal",
   },
   earlybird: {
     name: "Early Bird",

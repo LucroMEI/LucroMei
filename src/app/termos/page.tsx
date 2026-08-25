@@ -122,9 +122,9 @@ export default function TermosPage() {
         <Ul
           items={[
             "Teste grátis: 14 (quatorze) dias, com acesso às funcionalidades do MVP",
-            "Plano mensal: R$ 39,90 (trinta e nove reais e noventa centavos) por mês",
-            "Plano anual: valor equivalente a aproximadamente R$ 29,90/mês, cobrado anualmente",
-            "Plano Early Bird (quando disponível): condições promocionais limitadas",
+            "Plano mensal: R$ 29,90 (vinte e nove reais e noventa centavos) por mês",
+            "Plano anual: valor equivalente a aproximadamente R$ 24,90/mês, cobrado anualmente",
+            "Plano Early Bird (quando disponível): R$ 19,90/mês em condições promocionais limitadas",
           ]}
         />
         <P>

@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Pause, Play, Plus, Trash2, Pencil, Repeat } from "lucide-react";
+import { Pause, Play, Plus, Repeat } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL } from "@/lib/format";
 import { DEFAULT_CATEGORIES, isDeductibleDefault } from "@/lib/categories";
 import { clampDayOfMonth, clampMonth } from "@/lib/recurring";
-import type { RecurringExpense, RecurringFrequency } from "@/lib/types";
+import type { RecurringFrequency } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,16 +26,9 @@ const emptyForm = {
 };
 
 export default function DespesasFixasPage() {
-  const {
-    ready,
-    recurring,
-    addRecurring,
-    updateRecurring,
-    removeRecurring,
-  } = useFinance();
+  const { ready, recurring, addRecurring, updateRecurring } = useFinance();
 
   const [form, setForm] = useState(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const expenseCategories = useMemo(
@@ -50,27 +43,7 @@ export default function DespesasFixasPage() {
     return <p className="text-sm text-slate-500">Carregando…</p>;
   }
 
-  function startEdit(r: RecurringExpense) {
-    setEditingId(r.id);
-    setForm({
-      description: r.description,
-      amount: String(r.amount).replace(".", ","),
-      day_of_month: String(r.day_of_month),
-      month_of_year: String(r.month_of_year ?? new Date().getMonth() + 1),
-      frequency: r.frequency ?? "monthly",
-      category: r.category,
-      is_deductible: r.is_deductible,
-      active: r.active,
-      installments_total:
-        r.installments_total != null && r.installments_total > 0
-          ? String(r.installments_total)
-          : "",
-    });
-    setShowForm(true);
-  }
-
   function resetForm() {
-    setEditingId(null);
     setForm(emptyForm);
     setShowForm(false);
   }
@@ -105,14 +78,10 @@ export default function DespesasFixasPage() {
           : null,
     };
 
-    if (editingId) {
-      updateRecurring(editingId, payload);
-    } else {
-      addRecurring({
-        ...payload,
-        installments_generated: 0,
-      });
-    }
+    addRecurring({
+      ...payload,
+      installments_generated: 0,
+    });
     resetForm();
   }
 
@@ -141,7 +110,6 @@ export default function DespesasFixasPage() {
         <Button
           type="button"
           onClick={() => {
-            setEditingId(null);
             setForm(emptyForm);
             setShowForm(true);
           }}
@@ -156,14 +124,14 @@ export default function DespesasFixasPage() {
         {recurring.length > activeCount
           ? ` · ${recurring.length - activeCount} pausada${recurring.length - activeCount === 1 ? "" : "s"}`
           : ""}
+        . Para alterar nome ou valor, use <strong>Modificar</strong> na lista de
+        Transações.
       </p>
 
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              {editingId ? "Editar despesa fixa" : "Nova despesa fixa"}
-            </CardTitle>
+            <CardTitle className="text-base">Nova despesa fixa</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
@@ -322,9 +290,7 @@ export default function DespesasFixasPage() {
                 </span>
               </label>
               <div className="flex flex-wrap gap-2">
-                <Button type="submit">
-                  {editingId ? "Salvar alterações" : "Criar despesa fixa"}
-                </Button>
+                <Button type="submit">Criar despesa fixa</Button>
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Cancelar
                 </Button>
@@ -374,47 +340,25 @@ export default function DespesasFixasPage() {
                   )}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  title={r.active ? "Pausar" : "Reativar"}
-                  onClick={() => updateRecurring(r.id, { active: !r.active })}
-                >
-                  {r.active ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                title={r.active ? "Pausar" : "Reativar"}
+                onClick={() => updateRecurring(r.id, { active: !r.active })}
+              >
+                {r.active ? (
+                  <>
                     <Pause className="h-4 w-4" />
-                  ) : (
+                    Pausar
+                  </>
+                ) : (
+                  <>
                     <Play className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  title="Editar"
-                  onClick={() => startEdit(r)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  title="Excluir"
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `Excluir a despesa fixa “${r.description}”? Lançamentos já feitos no caixa permanecem.`
-                      )
-                    ) {
-                      removeRecurring(r.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 text-rose-600" />
-                </Button>
-              </div>
+                    Reativar
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
         ))}

@@ -1,10 +1,15 @@
 @import "tailwindcss";
 
+/* Paleta recomendada LucroMEI — confiança + clareza (Emerald / Soft Slate) */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #f8fafc;
+  --foreground: #1e293b;
   --brand: #059669;
   --brand-dark: #047857;
+  --secondary: #64748b;
+  --accent: #f59e0b;
+  --card: #ffffff;
+  --border: #e2e8f0;
 }
 
 @theme inline {
@@ -38,10 +43,10 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 
-/* Landing: fundo limpo e nítido (sem “névoa” de gradiente) */
+/* Landing: fundo limpo e nítido */
 .landing-shell {
   background: #ffffff;
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .landing-hero {
@@ -49,7 +54,7 @@ input[type="number"]::-webkit-outer-spin-button {
   border-bottom: 1px solid #e2e8f0;
 }
 
-/* Cartão demo com sombra nítida, sem blur de backdrop */
+/* Cartão demo com sombra nítida */
 .demo-phone {
   background: #ffffff;
   border: 1px solid #e2e8f0;

@@ -72,7 +72,8 @@ export default function TrialAcabouPage() {
           </p>
           <p>
             Early Bird de lançamento (quando ainda houver vagas) a partir de{" "}
-            <strong>R$ 19,90/mês</strong>, ou Mensal a <strong>R$ 39,90/mês</strong>.
+            <strong>R$ 19,90/mês</strong>, Mensal a <strong>R$ 29,90/mês</strong>{" "}
+            ou Anual a <strong>R$ 24,90/mês</strong>.
             Se preferir parar por aqui, é só não assinar — a gente se despede de
             bem e sem fatura escondida.
           </p>
