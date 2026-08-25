@@ -46,9 +46,11 @@ function labelForRule(rule: RecurringExpense, generatedAfterThis: number): strin
 
 /**
  * Gera despesas recorrentes devidas (idempotente).
- * - monthly: se hoje >= dia e ainda não gerou neste YM
+ * - monthly: se hoje >= dia e ainda não há lançamento neste YM
  * - yearly: só no mês aniversário; valor cheio (não ÷12); 1× por ano
  * - parcelas: para quando installments_generated >= total
+ * - se o utilizador apagou o lançamento do mês mas a regra continua ativa,
+ *   regenera (sem incrementar de novo o contador de parcelas)
  */
 export function generateDueRecurring(
   rules: RecurringExpense[],
@@ -73,14 +75,13 @@ export function generateDueRecurring(
 
     const freq = rule.frequency ?? "monthly";
     const dueDay = clampDayOfMonth(rule.day_of_month);
+    /** Já tínhamos gerado este YM — se o tx foi apagado, regeneramos sem +1 nas parcelas */
+    const alreadyMarkedThisYm = rule.last_generated_ym === ym;
 
     if (freq === "yearly") {
       const annivMonth = clampMonth(rule.month_of_year ?? month);
       if (month !== annivMonth) continue;
       if (todayDay < dueDay) continue;
-      // já gerou neste ano-mês aniversário
-      if (rule.last_generated_ym === ym) continue;
-      // se last foi no mesmo mês de outro… ym já cobre o ano
 
       const already = nextTx.some(
         (t) =>
@@ -98,7 +99,9 @@ export function generateDueRecurring(
       nextTx.unshift(tx);
       created.push(tx);
       rule.last_generated_ym = ym;
-      rule.installments_generated = (rule.installments_generated ?? 0) + 1;
+      if (!alreadyMarkedThisYm) {
+        rule.installments_generated = (rule.installments_generated ?? 0) + 1;
+      }
       rule.updated_at = new Date().toISOString();
       continue;
     }
@@ -112,7 +115,6 @@ export function generateDueRecurring(
     }
 
     if (todayDay < dueDay) continue;
-    if (rule.last_generated_ym === ym) continue;
 
     const already = nextTx.some(
       (t) =>
@@ -125,17 +127,22 @@ export function generateDueRecurring(
       continue;
     }
 
-    const nextCount = generated + 1;
+    // Regeneração do mesmo mês: mantém o nº de parcela; senão avança
+    const nextCount = alreadyMarkedThisYm
+      ? Math.max(1, generated)
+      : generated + 1;
     const date = dueDateForMonth(year, month, dueDay);
     const tx = buildTx(rule, date, nextCount);
     nextTx.unshift(tx);
     created.push(tx);
     rule.last_generated_ym = ym;
-    rule.installments_generated = nextCount;
-    rule.updated_at = new Date().toISOString();
-    if (total != null && total > 0 && nextCount >= total) {
-      rule.active = false;
+    if (!alreadyMarkedThisYm) {
+      rule.installments_generated = nextCount;
+      if (total != null && total > 0 && nextCount >= total) {
+        rule.active = false;
+      }
     }
+    rule.updated_at = new Date().toISOString();
   }
 
   return { transactions: nextTx, rules: nextRules, created };
