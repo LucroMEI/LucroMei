@@ -1,123 +1,59 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Pause, Play, Plus, Repeat } from "lucide-react";
+import { Camera, Pause, Play, Repeat } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL } from "@/lib/format";
-import { DEFAULT_CATEGORIES, isDeductibleDefault } from "@/lib/categories";
-import { clampDayOfMonth, clampMonth } from "@/lib/recurring";
-import type { RecurringFrequency } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const emptyForm = {
-  description: "",
-  amount: "",
-  day_of_month: "1",
-  month_of_year: String(new Date().getMonth() + 1),
-  frequency: "monthly" as RecurringFrequency,
-  category: "Software / Assinaturas",
-  is_deductible: true,
-  active: true,
-  /** "" = assinatura contínua; número = parcelas no cartão */
-  installments_total: "",
-};
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function DespesasFixasPage() {
-  const { ready, recurring, addRecurring, updateRecurring } = useFinance();
-
-  const [form, setForm] = useState(emptyForm);
-  const [showForm, setShowForm] = useState(false);
-
-  const expenseCategories = useMemo(
-    () =>
-      DEFAULT_CATEGORIES.filter(
-        (c) => c.type === "despesa" || c.type === "ambos"
-      ),
-    []
-  );
+  const { ready, recurring, updateRecurring } = useFinance();
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Carregando…</p>;
-  }
-
-  function resetForm() {
-    setForm(emptyForm);
-    setShowForm(false);
-  }
-
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const amount =
-      Number(String(form.amount).replace(/\./g, "").replace(",", ".")) || 0;
-    if (!form.description.trim() || amount <= 0) return;
-
-    const parcelsRaw = form.installments_total.trim();
-    const parcels =
-      form.frequency === "monthly" && parcelsRaw
-        ? Math.min(48, Math.max(2, Math.floor(Number(parcelsRaw) || 0)))
-        : null;
-
-    const payload = {
-      description: form.description.trim(),
-      amount,
-      day_of_month: clampDayOfMonth(Number(form.day_of_month)),
-      month_of_year:
-        form.frequency === "yearly"
-          ? clampMonth(Number(form.month_of_year))
-          : null,
-      frequency: form.frequency,
-      category: form.category,
-      is_deductible: form.is_deductible,
-      active: form.active,
-      installments_total:
-        form.frequency === "monthly" && parcels && parcels >= 2
-          ? parcels
-          : null,
-    };
-
-    addRecurring({
-      ...payload,
-      installments_generated: 0,
-    });
-    resetForm();
   }
 
   const activeCount = recurring.filter((r) => r.active).length;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            href="/transacoes"
-            className="text-sm font-medium text-emerald-700 hover:underline"
-          >
-            ← Transações
-          </Link>
-          <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold text-slate-900">
-            <Repeat className="h-6 w-6 text-emerald-600" />
-            Despesas fixas
-          </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Mensal, parcelas no cartão ou anual (valor cheio no mês do
-            pagamento — para o lucro e o CSV do contador). Também no
-            comprovante, ao salvar.
-          </p>
-        </div>
-        <Button
-          type="button"
-          onClick={() => {
-            setForm(emptyForm);
-            setShowForm(true);
-          }}
+      <div>
+        <Link
+          href="/transacoes"
+          className="text-sm font-medium text-emerald-700 hover:underline"
         >
-          <Plus className="h-4 w-4" />
-          Adicionar
-        </Button>
+          ← Transações
+        </Link>
+        <h1 className="mt-2 flex items-center gap-2 text-2xl font-bold text-slate-900">
+          <Repeat className="h-6 w-6 text-emerald-600" />
+          Despesas fixas
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Aqui só geres o que já é fixo (pausar ou reativar). Para criar uma
+          nova, tira foto ou envia o PDF do comprovante e, ao salvar, indica
+          que é despesa fixa.
+        </p>
       </div>
+
+      <Link href="/upload" className="block">
+        <Card className="border-emerald-200 bg-emerald-50/50 transition hover:border-emerald-300 hover:bg-emerald-50">
+          <CardContent className="flex items-center gap-3 py-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <Camera className="h-5 w-5" strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-slate-800">
+                Nova despesa fixa pela Foto / PDF
+              </p>
+              <p className="text-xs text-slate-500">
+                Ao salvar o comprovante, escolhe mensal, parcelas ou anual
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-emerald-700">Abrir</span>
+          </CardContent>
+        </Card>
+      </Link>
 
       <p className="text-sm text-slate-500">
         {activeCount} ativa{activeCount === 1 ? "" : "s"}
@@ -128,193 +64,28 @@ export default function DespesasFixasPage() {
         Transações.
       </p>
 
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Nova despesa fixa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="desc">Nome</Label>
-                <Input
-                  id="desc"
-                  value={form.description}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, description: e.target.value }))
-                  }
-                  placeholder="Ex.: Meta Verified Instagram"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="freq">Frequência</Label>
-                <Select
-                  id="freq"
-                  value={form.frequency}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      frequency: e.target.value as RecurringFrequency,
-                      installments_total:
-                        e.target.value === "yearly" ? "" : f.installments_total,
-                    }))
-                  }
-                >
-                  <option value="monthly">Todo mês (ou parcelas)</option>
-                  <option value="yearly">Todo ano (valor cheio)</option>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="amount">Valor (R$)</Label>
-                  <Input
-                    id="amount"
-                    value={form.amount}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, amount: e.target.value }))
-                    }
-                    placeholder="99,90"
-                    inputMode="decimal"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="day">Dia</Label>
-                  <Input
-                    id="day"
-                    type="number"
-                    min={1}
-                    max={28}
-                    value={form.day_of_month}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, day_of_month: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-              </div>
-              {form.frequency === "yearly" && (
-                <div>
-                  <Label htmlFor="moy">Mês do pagamento</Label>
-                  <Select
-                    id="moy"
-                    value={form.month_of_year}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        month_of_year: e.target.value,
-                      }))
-                    }
-                  >
-                    {[
-                      "Janeiro",
-                      "Fevereiro",
-                      "Março",
-                      "Abril",
-                      "Maio",
-                      "Junho",
-                      "Julho",
-                      "Agosto",
-                      "Setembro",
-                      "Outubro",
-                      "Novembro",
-                      "Dezembro",
-                    ].map((name, i) => (
-                      <option key={name} value={String(i + 1)}>
-                        {name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              )}
-              <div>
-                <Label htmlFor="cat">Categoria</Label>
-                <Select
-                  id="cat"
-                  value={form.category}
-                  onChange={(e) => {
-                    const category = e.target.value;
-                    setForm((f) => ({
-                      ...f,
-                      category,
-                      is_deductible: isDeductibleDefault(category),
-                    }));
-                  }}
-                >
-                  {expenseCategories.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              {form.frequency === "monthly" && (
-                <div>
-                  <Label htmlFor="parcels">Número de parcelas (cartão)</Label>
-                  <Input
-                    id="parcels"
-                    type="number"
-                    min={2}
-                    max={48}
-                    placeholder="Vazio = todo mês até pausar"
-                    value={form.installments_total}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        installments_total: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              )}
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={form.is_deductible}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      is_deductible: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600"
-                />
-                <span>
-                  <span className="font-medium text-slate-800">
-                    Gasto do negócio (MEI)
-                  </span>
-                  <span className="mt-0.5 block text-xs font-normal text-slate-500">
-                    Desmarque se for despesa pessoal
-                  </span>
-                </span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <Button type="submit">Criar despesa fixa</Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="space-y-3">
-        {recurring.length === 0 && !showForm && (
+        {recurring.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-slate-500">
-              Nenhuma despesa fixa ainda. Adicione Instagram, hosting, Grok e
-              outras assinaturas para o app lançar no dia certo.
+            <CardContent className="space-y-3 py-8 text-center text-sm text-slate-500">
+              <p>
+                Nenhuma despesa fixa ainda. Fotografa ou envia o PDF da
+                assinatura (Instagram, hosting, etc.) e marca como fixa ao
+                salvar.
+              </p>
+              <Link
+                href="/upload"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+              >
+                <Camera className="h-4 w-4" />
+                Ir para Upload
+              </Link>
             </CardContent>
           </Card>
         )}
 
         {recurring.map((r) => (
-          <Card
-            key={r.id}
-            className={!r.active ? "opacity-70" : undefined}
-          >
+          <Card key={r.id} className={!r.active ? "opacity-70" : undefined}>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div className="min-w-0">
                 <p className="font-semibold text-slate-900">{r.description}</p>
