@@ -86,14 +86,14 @@ export default function LandingPage() {
             <span className="text-lg">LucroMEI</span>
           </div>
           <div className="flex items-center gap-2">
-            <InstagramLink className="hidden sm:inline-flex" />
+            <InstagramLink />
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-slate-700">
                 Entrar
               </Button>
             </Link>
             <Link href="/cadastro">
-              <Button size="sm" className="bg-emerald-600 font-semibold shadow-sm hover:bg-emerald-700">
+              <Button size="sm" className="bg-amber-500 font-semibold text-white shadow-sm hover:bg-amber-600">
                 14 dias grátis
               </Button>
             </Link>
@@ -107,13 +107,13 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl px-4 pb-14 pt-10 text-center md:pb-20 md:pt-16">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
               <Shield className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-              Feito para MEIs do Brasil · Fase de teste
+              Feito para MEIs do Brasil
             </div>
 
             <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
               Tire uma foto do comprovante
               <br />
-              <span className="text-emerald-600">
+              <span className="text-amber-600">
                 e descubra quanto realmente sobrou.
               </span>
             </h1>
@@ -128,7 +128,7 @@ export default function LandingPage() {
               <Link href="/cadastro">
                 <Button
                   size="lg"
-                  className="min-w-[230px] bg-emerald-600 text-base font-bold shadow-md hover:bg-emerald-700"
+                  className="min-w-[230px] bg-amber-500 text-base font-bold text-white shadow-md hover:bg-amber-600"
                 >
                   Criar conta · 14 dias grátis
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
