@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* Paleta recomendada LucroMEI — confiança + clareza (Emerald / Soft Slate) */
+/* Paleta LucroMEI — verde no logo, dourado nos CTAs, fundo creme */
 :root {
-  --background: #f8fafc;
+  --background: #faf6ee;
   --foreground: #1e293b;
   --brand: #059669;
   --brand-dark: #047857;

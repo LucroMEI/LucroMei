@@ -40,7 +40,7 @@ export default function EsqueciSenhaPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF6EE] px-4">
       <Link href="/" className="mb-6 flex items-center gap-2 font-bold text-emerald-700">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
           L
@@ -64,7 +64,7 @@ export default function EsqueciSenhaPage() {
               </p>
               <Link
                 href="/login"
-                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-emerald-600 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-amber-500 text-sm font-semibold text-white shadow-sm hover:bg-amber-600"
               >
                 Voltar ao login
               </Link>

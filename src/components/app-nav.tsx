@@ -58,7 +58,7 @@ export function AppNav() {
                     className={cn(
                       "flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       active
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-amber-50 text-amber-900"
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
@@ -74,7 +74,7 @@ export function AppNav() {
               className={cn(
                 "inline-flex h-10 w-10 items-center justify-center rounded-lg md:hidden",
                 pathname.startsWith("/relatorios")
-                  ? "bg-emerald-50 text-emerald-700"
+                  ? "bg-amber-50 text-amber-900"
                   : "text-slate-600 hover:bg-slate-50"
               )}
               aria-label="Relatórios"
@@ -107,10 +107,10 @@ export function AppNav() {
             if (isUpload) {
               return (
                 <Link key={href} href={href} className="-mt-5 flex flex-col items-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/30">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/30">
                     <Camera className="h-6 w-6" />
                   </span>
-                  <span className="mt-0.5 text-[10px] font-medium text-emerald-700">Foto</span>
+                  <span className="mt-0.5 text-[10px] font-medium text-amber-800">Foto</span>
                 </Link>
               );
             }
@@ -120,7 +120,7 @@ export function AppNav() {
                 href={href}
                 className={cn(
                   "flex min-w-[52px] flex-col items-center gap-0.5 px-1.5 py-2 text-[10px] font-medium",
-                  active ? "text-emerald-700" : "text-slate-500"
+                  active ? "text-amber-800" : "text-slate-500"
                 )}
               >
                 <Icon className="h-5 w-5" />
