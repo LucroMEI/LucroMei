@@ -51,7 +51,14 @@ export default function CadastroPage() {
       }
 
       if (data.user) {
-        await ensureUserSettings(supabase, data.user);
+        try {
+          await Promise.race([
+            ensureUserSettings(supabase, data.user),
+            new Promise((resolve) => setTimeout(resolve, 2500)),
+          ]);
+        } catch {
+          // Sessão vale mesmo se settings atrasarem.
+        }
       }
 
       // Guarda e-mail recente (senha fica no gestor do navegador, se o user aceitar)
@@ -71,7 +78,14 @@ export default function CadastroPage() {
       });
       if (signInData.session) {
         if (signInData.user) {
-          await ensureUserSettings(supabase, signInData.user);
+          try {
+            await Promise.race([
+              ensureUserSettings(supabase, signInData.user),
+              new Promise((resolve) => setTimeout(resolve, 2500)),
+            ]);
+          } catch {
+            // ignore
+          }
         }
         router.push("/dashboard");
         router.refresh();

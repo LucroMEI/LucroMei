@@ -21,7 +21,6 @@ function isAppPath(path: string) {
 }
 
 function isProtectedAppPath(path: string) {
-  // Estas exigem login + trial/pago (assinatura e trial-acabou só login)
   return (
     path.startsWith("/dashboard") ||
     path.startsWith("/upload") ||
@@ -32,10 +31,14 @@ function isProtectedAppPath(path: string) {
   );
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+function hasAuthCookie(request: NextRequest) {
+  return request.cookies.getAll().some((c) => c.name.includes("auth-token"));
+}
+
+function withTimeout<T>(promise: PromiseLike<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("supabase-timeout")), ms);
-    promise.then(
+    Promise.resolve(promise).then(
       (value) => {
         clearTimeout(timer);
         resolve(value);
@@ -61,7 +64,6 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Sem Supabase: demo local (dev sem chaves)
   if (!url || !key) {
     return supabaseResponse;
   }
@@ -82,32 +84,41 @@ export async function updateSession(request: NextRequest) {
   });
 
   let user: User | null = null;
+  let authTimedOut = false;
   try {
     const result = await withTimeout(supabase.auth.getUser(), 2500);
     user = result.data.user;
   } catch {
-    // Auth/DB lento ou Disk IO estourado: não segura o middleware até o 504.
+    // Auth/DB lento: não segura o middleware até o 504.
+    authTimedOut = true;
     user = null;
   }
 
-  // Com Supabase configurado: app exige login (demo “sem conta” desligado)
-  if (isAppPath(path) && !user) {
+  if (!user) {
+    // Cookie de sessão presente + Auth lento = NÃO expulsar. Era isso que
+    // impedia entrar depois do login (redirect infinito para /login).
+    if (authTimedOut && hasAuthCookie(request)) {
+      return supabaseResponse;
+    }
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/login";
     redirect.searchParams.set("next", path);
     return NextResponse.redirect(redirect);
   }
 
-  // Trial / bloqueio — se o SELECT travar por Disk IO, deixa o client decidir.
   if (user && isProtectedAppPath(path)) {
     try {
-      const { data: settings } = await supabase
-        .from("user_settings")
-        .select("trial_ends_at, subscription_status, plan")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const { data: settings } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("user_settings")
+            .select("trial_ends_at, subscription_status, plan")
+            .eq("user_id", user.id)
+            .maybeSingle()
+        ),
+        2500
+      );
 
-      // Sem linha ainda: deixa passar; o client cria settings no 1º load
       if (settings) {
         const access = canAccessApp(settings);
         if (!access.ok) {
@@ -117,7 +128,7 @@ export async function updateSession(request: NextRequest) {
         }
       }
     } catch {
-      // ignore — TrialBanner no client cobre o bloqueio
+      // Disk IO lento — deixa o client decidir (TrialBanner).
     }
   }
 

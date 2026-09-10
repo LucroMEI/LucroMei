@@ -55,13 +55,32 @@ export function useFinance(month?: { year: number; month: number }) {
     if (isSupabaseConfigured()) {
       try {
         supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        let user = null as Awaited<
+          ReturnType<typeof supabase.auth.getUser>
+        >["data"]["user"];
+        try {
+          const result = await Promise.race([
+            supabase.auth.getUser(),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("timeout")), 4000)
+            ),
+          ]);
+          user = result.data.user;
+        } catch {
+          const { data } = await supabase.auth.getSession();
+          user = data.session?.user ?? null;
+        }
         if (user) {
           uid = user.id;
           loggedIn = true;
-          remoteSettings = await ensureUserSettings(supabase, user);
+          try {
+            remoteSettings = await Promise.race([
+              ensureUserSettings(supabase, user),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+            ]);
+          } catch {
+            remoteSettings = null;
+          }
         }
       } catch (e) {
         console.error("[useFinance.auth]", e);
@@ -141,16 +160,20 @@ export function useFinance(month?: { year: number; month: number }) {
 
     // Se gerou algo novo, sobe para o Supabase (sem apagar local se falhar)
     if (loggedIn && supabase) {
-      const okTx = await upsertRemoteTransactions(supabase, localTx);
-      const okRec = await upsertRemoteRecurring(supabase, localRec);
-      if (okTx) {
-        localTx = mergeById(localTx, await fetchRemoteTransactions(supabase, uid));
+      try {
+        const okTx = await upsertRemoteTransactions(supabase, localTx);
+        const okRec = await upsertRemoteRecurring(supabase, localRec);
+        if (okTx) {
+          localTx = mergeById(localTx, await fetchRemoteTransactions(supabase, uid));
+        }
+        if (okRec) {
+          localRec = mergeById(localRec, await fetchRemoteRecurring(supabase, uid));
+        }
+        saveDemoTransactions(localTx, uid);
+        saveDemoRecurring(localRec, uid);
+      } catch (e) {
+        console.error("[useFinance.sync-recurring]", e);
       }
-      if (okRec) {
-        localRec = mergeById(localRec, await fetchRemoteRecurring(supabase, uid));
-      }
-      saveDemoTransactions(localTx, uid);
-      saveDemoRecurring(localRec, uid);
     }
 
     setTransactions(localTx);
@@ -159,7 +182,18 @@ export function useFinance(month?: { year: number; month: number }) {
   }, []);
 
   useEffect(() => {
-    void reload();
+    let cancelled = false;
+    const safety = setTimeout(() => {
+      if (!cancelled) setReady(true);
+    }, 8000);
+    void reload().finally(() => {
+      cancelled = true;
+      clearTimeout(safety);
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(safety);
+    };
   }, [reload]);
 
   const monthTx = useMemo(
