@@ -101,14 +101,11 @@ export async function updateSession(request: NextRequest) {
   // Trial / bloqueio — se o SELECT travar por Disk IO, deixa o client decidir.
   if (user && isProtectedAppPath(path)) {
     try {
-      const { data: settings } = await withTimeout(
-        supabase
-          .from("user_settings")
-          .select("trial_ends_at, subscription_status, plan")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        2500
-      );
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("trial_ends_at, subscription_status, plan")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       // Sem linha ainda: deixa passar; o client cria settings no 1º load
       if (settings) {
