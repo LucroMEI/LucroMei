@@ -14,6 +14,9 @@ import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
 import { InstagramLink } from "@/components/instagram-link";
 
+export const dynamic = "force-static";
+export const revalidate = false;
+
 const features = [
   {
     icon: Camera,
