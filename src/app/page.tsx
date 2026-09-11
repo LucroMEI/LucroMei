@@ -93,7 +93,7 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/cadastro">
-              <Button size="sm" className="bg-amber-500 font-semibold text-white shadow-sm hover:bg-amber-600">
+              <Button size="sm" className="bg-mustard font-semibold text-white shadow-sm hover:bg-mustard-dark">
                 14 dias grátis
               </Button>
             </Link>
@@ -113,7 +113,7 @@ export default function LandingPage() {
             <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
               Tire uma foto do comprovante
               <br />
-              <span className="text-amber-600">
+              <span className="text-mustard-text">
                 e descubra quanto realmente sobrou.
               </span>
             </h1>
@@ -128,7 +128,7 @@ export default function LandingPage() {
               <Link href="/cadastro">
                 <Button
                   size="lg"
-                  className="min-w-[230px] bg-amber-500 text-base font-bold text-white shadow-md hover:bg-amber-600"
+                  className="min-w-[230px] bg-mustard text-base font-bold text-white shadow-md hover:bg-mustard-dark"
                 >
                   Criar conta · 14 dias grátis
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />

@@ -107,7 +107,7 @@ export function AppNav() {
             if (isUpload) {
               return (
                 <Link key={href} href={href} className="-mt-5 flex flex-col items-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/30">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mustard text-white shadow-lg shadow-mustard/30">
                     <Camera className="h-6 w-6" />
                   </span>
                   <span className="mt-0.5 text-[10px] font-medium text-amber-800">Foto</span>

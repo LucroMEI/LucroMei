@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
-/* Paleta LucroMEI — verde no logo, dourado nos CTAs, fundo creme */
+/* Paleta LucroMEI — verde no logo, moutarde fermé nos CTAs, fundo creme */
 :root {
   --background: #faf6ee;
   --foreground: #1e293b;
   --brand: #059669;
   --brand-dark: #047857;
   --secondary: #64748b;
-  --accent: #f59e0b;
+  --accent: #c4a04a;
+  --accent-dark: #a88738;
   --card: #ffffff;
   --border: #e2e8f0;
 }
@@ -15,6 +16,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-mustard: #c4a04a;
+  --color-mustard-dark: #a88738;
+  --color-mustard-text: #b08a2e;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

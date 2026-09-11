@@ -64,7 +64,7 @@ export default function EsqueciSenhaPage() {
               </p>
               <Link
                 href="/login"
-                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-amber-500 text-sm font-semibold text-white shadow-sm hover:bg-amber-600"
+                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-mustard text-sm font-semibold text-white shadow-sm hover:bg-mustard-dark"
               >
                 Voltar ao login
               </Link>
