@@ -5,19 +5,20 @@ import { ContactForm } from "@/components/contact-form";
 export const metadata: Metadata = {
   title: "Contato",
   description:
-    "Fale com o LucroMEI — suporte, assinatura, privacidade, feedback e primeiros 20 testes.",
+    "Fale com o LucroMEI — suporte, assinatura, privacidade e feedback.",
+  alternates: { canonical: "/contato" },
 };
 
 export default function ContatoPage() {
   return (
     <LegalShell
       title="Contato"
-      subtitle="Dúvidas, suporte, assinatura, privacidade ou feedback dos primeiros 20 testes."
+      subtitle="Dúvidas, suporte, assinatura, privacidade ou feedback."
     >
       <ContactForm />
       <p className="text-xs text-slate-500">
-        Tempo de resposta típico na fase de validação: até alguns dias úteis. Pedidos
-        de exclusão de dados (LGPD) têm prioridade.
+        Tempo de resposta típico: até alguns dias úteis. Pedidos de exclusão de
+        dados (LGPD) têm prioridade.
       </p>
     </LegalShell>
   );

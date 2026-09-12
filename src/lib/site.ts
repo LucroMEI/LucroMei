@@ -10,8 +10,8 @@ export function getSiteUrl(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
   }
-  // Fallback de produção (webhook Stripe / docs)
-  return "https://lucro-mei.vercel.app";
+  // Fallback de produção (domínio oficial)
+  return "https://uselucromei.com.br";
 }
 
 export const SITE_NAME = "LucroMEI";

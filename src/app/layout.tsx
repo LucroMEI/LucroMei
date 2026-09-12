@@ -67,16 +67,14 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
   },
-  alternates: {
-    canonical: siteUrl,
-  },
+  // Canonical por página (não forçar a home em todas as rotas — quebra SEO).
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#059669", // Emerald primary (paleta recomendada)
-  maximumScale: 1,
+  themeColor: "#059669",
+  // Sem maximumScale:1 — permite zoom (acessibilidade / Lighthouse).
 };
 
 export default function RootLayout({

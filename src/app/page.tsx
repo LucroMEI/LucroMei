@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Camera,
@@ -13,9 +14,16 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
 import { InstagramLink } from "@/components/instagram-link";
+import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
 export const dynamic = "force-static";
 export const revalidate = false;
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+  description: SITE_DESCRIPTION,
+};
 
 const features = [
   {
@@ -74,8 +82,40 @@ const plans = [
 ];
 
 export default function LandingPage() {
+  const site = getSiteUrl();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: SITE_NAME,
+        url: site,
+        email: "contato.lucromei@gmail.com",
+        sameAs: ["https://www.instagram.com/lucromei.oficial/"],
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: SITE_NAME,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        description: SITE_DESCRIPTION,
+        url: site,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "BRL",
+          description: "14 dias grátis, sem cartão",
+        },
+      },
+    ],
+  };
+
   return (
     <div className="landing-shell min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Header sólido — sem glass/blur */}
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">

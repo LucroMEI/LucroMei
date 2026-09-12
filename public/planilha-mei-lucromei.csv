@@ -1,0 +1,6 @@
+data;tipo;categoria;descricao;valor_brl;gasto_negocio
+2026-08-01;receita;Vendas / Serviços;Exemplo: serviço prestado;1500,00;nao
+2026-08-03;despesa;Transporte;Exemplo: deslocamento;45,90;sim
+2026-08-05;despesa;Software / Assinaturas;Exemplo: ferramenta do negócio;99,90;sim
+2026-08-10;despesa;Pessoal;Exemplo: compra pessoal (não conta no lucro do MEI);80,00;nao
+2026-08-15;receita;Vendas / Serviços;Exemplo: outro serviço;800,00;nao

@@ -5,7 +5,9 @@ import { LegalShell, H2, P } from "@/components/legal-shell";
 
 export const metadata: Metadata = {
   title: "Dúvidas frequentes (FAQ)",
-  description: "Perguntas e respostas sobre o LucroMEI, preços, DAS, privacidade e 14 dias grátis.",
+  description:
+    "Perguntas e respostas sobre o LucroMEI, preços, DAS, privacidade e 14 dias grátis.",
+  alternates: { canonical: "/faq" },
 };
 
 const faqs: { q: string; a: ReactNode }[] = [
@@ -203,7 +205,7 @@ export default function FaqPage() {
       <section className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-6">
         <H2>Ainda com dúvida?</H2>
         <P>
-          Estamos em validação e respondemos com atenção.{" "}
+          Respondemos com atenção.{" "}
           <Link href="/contato" className="font-semibold text-emerald-800 underline">
             Fale conosco
           </Link>

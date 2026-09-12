@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Política de Confidencialidade",
   description:
     "Como o LucroMEI trata o sigilo de comprovantes e informações financeiras dos usuários.",
+  alternates: { canonical: "/confidencialidade" },
 };
 
 export default function ConfidencialidadePage() {

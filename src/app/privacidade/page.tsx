@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Política de Privacidade (LGPD)",
   description:
     "Como o LucroMEI coleta, usa e protege dados pessoais de MEIs e freelancers.",
+  alternates: { canonical: "/privacidade" },
 };
 
 export default function PrivacidadePage() {
