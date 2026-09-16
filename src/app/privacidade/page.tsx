@@ -12,7 +12,7 @@ export default function PrivacidadePage() {
   return (
     <LegalShell
       title="Política de Privacidade"
-      subtitle="Última atualização: 15 de julho de 2026 · Em conformidade com a LGPD (Lei nº 13.709/2018)"
+      subtitle="Última atualização: 16 de setembro de 2026 · Em conformidade com a LGPD (Lei nº 13.709/2018)"
     >
       <section>
         <H2>1. Controlador</H2>
@@ -137,9 +137,10 @@ export default function PrivacidadePage() {
       <section>
         <H2>9. Cookies e tecnologias similares</H2>
         <P>
-          Podemos usar cookies essenciais (sessão, autenticação) e, futuramente,
-          cookies de analytics. Você pode controlar cookies no navegador; a
-          desativação de cookies essenciais pode impedir o login.
+          Usamos cookies essenciais (sessão, autenticação) e o Google Analytics
+          para entender visitas ao site (páginas vistas, origem do tráfego).
+          Você pode controlar cookies no navegador; a desativação de cookies
+          essenciais pode impedir o login.
         </P>
       </section>
 

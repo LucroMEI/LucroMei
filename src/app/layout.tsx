@@ -1,12 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import {
   getSiteUrl,
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_TAGLINE,
 } from "@/lib/site";
+
+const GA_ID =
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "G-WPX68BVX12";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -90,6 +94,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#FAF6EE] text-slate-900">
         {children}
         <Analytics />
+        {GA_ID.startsWith("G-") ? <GoogleAnalytics gaId={GA_ID} /> : null}
       </body>
     </html>
   );
