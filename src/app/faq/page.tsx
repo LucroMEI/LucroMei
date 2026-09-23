@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { LegalShell, H2, P } from "@/components/legal-shell";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Dúvidas frequentes (FAQ)",
   description:
     "Perguntas e respostas sobre o LucroMEI, preços, DAS, privacidade e 14 dias grátis.",
-  alternates: { canonical: "/faq" },
+  ...urlMetadata("/faq"),
 };
 
 const faqs: { q: string; a: ReactNode }[] = [

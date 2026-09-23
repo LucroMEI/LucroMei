@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BlogShell, H2, P, Ul } from "@/components/blog-shell";
 import { getPost } from "@/lib/blog";
+import { urlMetadata } from "@/lib/site";
 
 const post = getPost("app-para-mei")!;
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
   title: post.title,
   description: post.description,
   keywords: post.keywords,
-  alternates: { canonical: `/blog/app-para-mei` },
+  ...urlMetadata("/blog/app-para-mei"),
 };
 
 export default function AppParaMeiPage() {

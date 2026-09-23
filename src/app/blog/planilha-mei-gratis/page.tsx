@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { BlogShell, H2, P, Ul } from "@/components/blog-shell";
 import { Button } from "@/components/ui/button";
 import { getPost } from "@/lib/blog";
+import { urlMetadata } from "@/lib/site";
 
 const post = getPost("planilha-mei-gratis")!;
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   title: post.title,
   description: post.description,
   keywords: post.keywords,
-  alternates: { canonical: `/blog/planilha-mei-gratis` },
+  ...urlMetadata("/blog/planilha-mei-gratis"),
 };
 
 export default function PlanilhaMeiGratisPage() {

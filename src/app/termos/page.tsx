@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalShell, H2, P, Ul } from "@/components/legal-shell";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Termos de Uso e Condições Gerais de Venda",
-  alternates: { canonical: "/termos" },
   description:
     "Termos de uso e condições gerais de venda do LucroMEI — assinatura, teste grátis, cancelamento e limitações.",
+  ...urlMetadata("/termos"),
 };
 
 export default function TermosPage() {

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalShell, H2, P, Ul } from "@/components/legal-shell";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade (LGPD)",
   description:
     "Como o LucroMEI coleta, usa e protege dados pessoais de MEIs e freelancers.",
-  alternates: { canonical: "/privacidade" },
+  ...urlMetadata("/privacidade"),
 };
 
 export default function PrivacidadePage() {

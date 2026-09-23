@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalShell, H2, P, Ul } from "@/components/legal-shell";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Política de Confidencialidade",
   description:
     "Como o LucroMEI trata o sigilo de comprovantes e informações financeiras dos usuários.",
-  alternates: { canonical: "/confidencialidade" },
+  ...urlMetadata("/confidencialidade"),
 };
 
 export default function ConfidencialidadePage() {

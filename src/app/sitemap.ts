@@ -1,10 +1,8 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "@/lib/site";
+import { canonicalUrl } from "@/lib/site";
 
 /** Páginas públicas indexáveis (sem login/cadastro/área logada). */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = getSiteUrl();
-
   const publicPaths: {
     path: string;
     priority: number;
@@ -32,7 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return publicPaths.map(({ path, priority, changeFrequency }) => ({
-    url: `${base}${path === "/" ? "/" : path}`,
+    url: canonicalUrl(path),
     lastModified: new Date(),
     changeFrequency,
     priority,

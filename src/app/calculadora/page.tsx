@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { formatBRL } from "@/lib/format";
 import { LIMITE_MEI_ANUAL } from "@/lib/taxes";
-import { getSiteUrl } from "@/lib/site";
+import { canonicalUrl } from "@/lib/site";
 
 const title = "Calculadora do limite MEI 2026";
 const description = `Calcule grátis se você está perto do teto de faturamento MEI (${formatBRL(LIMITE_MEI_ANUAL)}/ano). Projeção simples + quanto ainda cabe no limite.`;
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${title} · LucroMEI`,
     description,
-    url: `${getSiteUrl()}/calculadora`,
+    url: canonicalUrl("/calculadora"),
     type: "website",
     locale: "pt_BR",
   },
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     description,
   },
   alternates: {
-    canonical: `${getSiteUrl()}/calculadora`,
+    canonical: canonicalUrl("/calculadora"),
   },
   keywords: [
     "limite MEI",

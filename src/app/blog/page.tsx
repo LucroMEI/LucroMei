@@ -3,12 +3,13 @@ import Link from "next/link";
 import { BlogShell } from "@/components/blog-shell";
 import { BLOG_POSTS } from "@/lib/blog";
 import { Button } from "@/components/ui/button";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Blog LucroMEI — app, controle financeiro e planilha para MEI",
   description:
     "Artigos práticos para MEI: app para MEI, controle financeiro e planilha MEI grátis. Sem termos contábeis complicados.",
-  alternates: { canonical: "/blog" },
+  ...urlMetadata("/blog"),
 };
 
 export default function BlogIndexPage() {

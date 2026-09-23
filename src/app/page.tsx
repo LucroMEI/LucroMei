@@ -14,15 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
 import { InstagramLink } from "@/components/instagram-link";
-import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import {
+  canonicalUrl,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+  urlMetadata,
+} from "@/lib/site";
 
 export const dynamic = "force-static";
 export const revalidate = false;
 
 export const metadata: Metadata = {
-  alternates: { canonical: "/" },
   title: `${SITE_NAME} — ${SITE_TAGLINE}`,
   description: SITE_DESCRIPTION,
+  ...urlMetadata("/"),
 };
 
 const features = [
@@ -82,7 +88,7 @@ const plans = [
 ];
 
 export default function LandingPage() {
-  const site = getSiteUrl();
+  const site = canonicalUrl("/");
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [

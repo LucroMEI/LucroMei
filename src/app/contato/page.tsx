@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { LegalShell } from "@/components/legal-shell";
 import { ContactForm } from "@/components/contact-form";
+import { urlMetadata } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contato",
   description:
     "Fale com o LucroMEI — suporte, assinatura, privacidade e feedback.",
-  alternates: { canonical: "/contato" },
+  ...urlMetadata("/contato"),
 };
 
 export default function ContatoPage() {

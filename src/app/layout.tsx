@@ -61,7 +61,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
-    url: siteUrl,
     siteName: SITE_NAME,
     locale: "pt_BR",
     type: "website",
@@ -71,7 +70,7 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
   },
-  // Canonical por página (não forçar a home em todas as rotas — quebra SEO).
+  // Canonical e og:url por página (não definir url da home aqui — as filhas herdam).
 };
 
 export const viewport: Viewport = {
