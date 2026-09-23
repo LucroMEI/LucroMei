@@ -15,14 +15,15 @@ export function getSiteUrl(): string {
 }
 
 /**
- * URL absoluta para canonical / og:url / sitemap.
- * Home usa barra final (https://uselucromei.com.br/) — o sitemap e o Google
- * normalizam assim. Páginas internas ficam sem barra final (/faq, não /faq/).
+ * URL absoluta para canonical / og:url / sitemap / JSON-LD.
+ * Home: sem barra final. O Next.js serializa `/` como origin
+ * (`https://uselucromei.com.br`), nunca `...br/`. Páginas internas
+ * também sem barra (`/faq`, não `/faq/`).
  */
 export function canonicalUrl(path: string = "/"): string {
   const base = getSiteUrl();
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  if (normalized === "/") return `${base}/`;
+  if (normalized === "/") return base;
   return `${base}${normalized.replace(/\/$/, "")}`;
 }
 
