@@ -23,11 +23,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
+import { FirstPhotoGate } from "@/components/first-photo-gate";
 
 export default function DashboardPage() {
-  const { ready, monthTx, summary, settings, year, month, syncError } =
+  const { ready, monthTx, summary, settings, year, month, syncError, transactions } =
     useFinance();
   const [calMsg, setCalMsg] = useState("");
+  const [skipFirstPhoto, setSkipFirstPhoto] = useState(false);
 
   if (!ready) {
     return (
@@ -35,6 +37,10 @@ export default function DashboardPage() {
         Carregando…
       </div>
     );
+  }
+
+  if (transactions.length === 0 && !skipFirstPhoto) {
+    return <FirstPhotoGate onSkip={() => setSkipFirstPhoto(true)} />;
   }
 
   const isMei = (settings?.regime_tributario ?? "MEI") === "MEI";
@@ -353,9 +359,14 @@ function Row({
 function EmptyState() {
   return (
     <div className="py-8 text-center">
-      <p className="text-sm text-slate-600">Nenhuma transação este mês.</p>
-      <Link href="/upload" className="mt-3 inline-block">
-        <Button size="sm">Enviar primeiro comprovante</Button>
+      <p className="text-sm font-medium text-slate-800">
+        Ainda não tem comprovante neste mês.
+      </p>
+      <p className="mt-1 text-sm text-slate-600">
+        Tira foto de um PIX ou notinha pra ver o lucro.
+      </p>
+      <Link href="/upload?primeiro=1" className="mt-3 inline-block">
+        <Button size="sm">Tirar foto agora</Button>
       </Link>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Camera,
   FileUp,
@@ -27,7 +27,47 @@ import {
 
 type RecurringPromptMode = "once" | "monthly" | "installments" | "yearly";
 
+function UploadHeading() {
+  const search = useSearchParams();
+  const isFirst = search.get("primeiro") === "1";
+  if (isFirst) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold">
+          Primeiro passo: tira foto do último PIX ou da notinha
+        </h1>
+        <p className="text-sm text-slate-600">
+          PIX, notinha ou recibo. Aí o LucroMei lê e mostra quanto sobrou.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <h1 className="text-2xl font-bold">Enviar comprovante</h1>
+      <p className="text-sm text-slate-600">
+        Tire uma foto ou envie um PDF. A leitura preenche valor, data e
+        categoria — confira e salve.
+      </p>
+    </div>
+  );
+}
+
 export default function UploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-40 items-center justify-center text-sm text-slate-500">
+          Carregando…
+        </div>
+      }
+    >
+      <UploadPageInner />
+    </Suspense>
+  );
+}
+
+function UploadPageInner() {
   const router = useRouter();
   const { addTransaction, addRecurring } = useFinance();
   const [dragging, setDragging] = useState(false);
@@ -549,7 +589,9 @@ export default function UploadPage() {
       });
 
       await new Promise((r) => setTimeout(r, 150));
-      router.push("/transacoes");
+      const firstPhoto =
+        new URLSearchParams(window.location.search).get("primeiro") === "1";
+      router.push(firstPhoto ? "/dashboard" : "/transacoes");
     } catch (e) {
       console.error("[upload.commitSave]", e);
       setError("Não foi possível salvar. Tente de novo.");
@@ -565,13 +607,7 @@ export default function UploadPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Enviar comprovante</h1>
-        <p className="text-sm text-slate-600">
-          Tire uma foto ou envie um PDF. A leitura preenche valor, data e
-          categoria — confira e salve.
-        </p>
-      </div>
+      <UploadHeading />
 
       {/* inputs ocultos separados: câmera nativa vs ficheiros */}
       <input

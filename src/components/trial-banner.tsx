@@ -31,8 +31,8 @@ export function TrialBanner() {
           : "";
         setText(
           access.daysLeft <= 0
-            ? `Último dia dos 14 dias grátis${end ? ` (${end})` : ""}.`
-            : `14 dias grátis: ${access.daysLeft} dia(s) restante(s)${end ? ` · até ${end}` : ""}.`
+            ? `Último dia dos 14 dias grátis${end ? ` (${end})` : ""}. Tira foto do comprovante pra ver o lucro.`
+            : `14 dias grátis: ${access.daysLeft} dia(s) restante(s)${end ? ` · até ${end}` : ""}. Tira foto do comprovante pra ver o lucro.`
         );
       } catch {
         // ignore
@@ -51,6 +51,10 @@ export function TrialBanner() {
       }`}
     >
       {text}{" "}
+      <Link href="/upload?primeiro=1" className="font-bold underline">
+        Foto
+      </Link>
+      {" · "}
       <Link href="/assinatura" className="font-bold underline">
         Ver planos
       </Link>

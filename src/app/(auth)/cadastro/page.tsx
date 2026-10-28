@@ -42,7 +42,7 @@ export default function CadastroPage() {
         password,
         options: {
           data: { full_name: fullName },
-          emailRedirectTo: `${window.location.origin}/callback?next=/dashboard`,
+          emailRedirectTo: `${window.location.origin}/callback?next=${encodeURIComponent("/upload?primeiro=1")}`,
         },
       });
       if (err) {
@@ -66,7 +66,7 @@ export default function CadastroPage() {
 
       // Nesta fase: sem exigir verificação de e-mail — entra no app se houver sessão
       if (data.session) {
-        router.push("/dashboard");
+        router.push("/upload?primeiro=1");
         router.refresh();
         return;
       }
@@ -87,7 +87,7 @@ export default function CadastroPage() {
             // ignore
           }
         }
-        router.push("/dashboard");
+        router.push("/upload?primeiro=1");
         router.refresh();
         return;
       }
