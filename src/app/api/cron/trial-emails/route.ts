@@ -60,7 +60,7 @@ async function run(request: Request) {
   const admin = createAdminClient();
   const resend = new Resend(apiKey);
   const from =
-    process.env.RESEND_FROM?.trim() || "LucroMei <beth.t@example.com>";
+    process.env.RESEND_FROM?.trim() || "LucroMei <onboarding@resend.dev>";
   const replyTo =
     process.env.RESEND_REPLY_TO?.trim() || "contato.lucromei@gmail.com";
 
