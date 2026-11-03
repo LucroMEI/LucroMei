@@ -77,6 +77,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#059669",
+  viewportFit: "cover",
   // Sem maximumScale:1 — permite zoom (acessibilidade / Lighthouse).
 };
 
@@ -90,7 +91,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#FAF6EE] text-slate-900">
+      <body className="flex min-h-full max-w-full flex-col overflow-x-hidden bg-[#FAF6EE] text-slate-900">
         {children}
         <Analytics />
         {GA_ID.startsWith("G-") ? <GoogleAnalytics gaId={GA_ID} /> : null}

@@ -64,11 +64,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-slate-500">Olá, {settings?.full_name || "MEI"}</p>
-          <h1 className="text-2xl font-bold capitalize text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900">
             {monthLabel(`${year}-${String(month).padStart(2, "0")}`)}
           </h1>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -131,7 +131,7 @@ export default function DashboardPage() {
               </p>
               <p className="mt-2 text-[11px] text-slate-500">
                 O alerta no app é automático. Para a{" "}
-                <strong>agenda do telemóvel</strong>, escolha abaixo (só se quiser):
+                <strong>agenda do celular</strong>, escolha abaixo (só se quiser):
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button
@@ -193,8 +193,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between">
+        <Card className="min-w-0 overflow-hidden lg:col-span-2">
+          <CardHeader className="flex-row items-center justify-between gap-2">
             <CardTitle>Últimas transações</CardTitle>
             <Link href="/transacoes" className="text-sm font-medium text-emerald-700">
               Ver todas
@@ -206,8 +206,8 @@ export default function DashboardPage() {
             ) : (
               <ul className="divide-y divide-slate-100">
                 {monthTx.slice(0, 6).map((t) => (
-                  <li key={t.id} className="flex items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
+                  <li key={t.id} className="flex min-w-0 items-center justify-between gap-3 py-3">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-900">
                         {t.description || t.category}
                       </p>
@@ -349,9 +349,11 @@ function Row({
   bold?: boolean;
 }) {
   return (
-    <div className={`flex justify-between ${bold ? "font-semibold" : ""}`}>
-      <span className="text-slate-600">{label}</span>
-      <span>{value}</span>
+    <div
+      className={`flex min-w-0 justify-between gap-3 ${bold ? "font-semibold" : ""}`}
+    >
+      <span className="min-w-0 text-slate-600">{label}</span>
+      <span className="shrink-0">{value}</span>
     </div>
   );
 }

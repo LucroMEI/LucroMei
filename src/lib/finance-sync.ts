@@ -286,6 +286,8 @@ export async function deleteRemoteRecurring(
 
 /**
  * Junta local + remoto por id (mais recente por updated_at ganha).
+ * Não use sozinho em despesas fixas: um item apagado noutro aparelho
+ * voltaria do cache local e seria reenviado ao servidor.
  */
 export function mergeById<
   T extends { id: string; updated_at?: string; created_at?: string },
@@ -303,4 +305,30 @@ export function mergeById<
     if (a >= b) map.set(item.id, item);
   }
   return [...map.values()];
+}
+
+/** Itens só no celular há mais de 10 min e já sumiram no servidor foram excluídos noutro aparelho. */
+export const LOCAL_ONLY_GRACE_MS = 10 * 60 * 1000;
+
+export function dropRemoteDeleted<
+  T extends { id: string; updated_at?: string; created_at?: string },
+>(
+  local: T[],
+  remote: T[],
+  now = Date.now(),
+  graceMs = LOCAL_ONLY_GRACE_MS
+): T[] {
+  const remoteIds = new Set(remote.map((item) => item.id));
+  return local.filter((item) => {
+    if (remoteIds.has(item.id)) return true;
+    const t = Date.parse(item.created_at || item.updated_at || "");
+    return Number.isFinite(t) && now - t < graceMs;
+  });
+}
+
+/** Despesas fixas: o servidor manda na lista. Transações já debitadas não passam por aqui. */
+export function mergeRecurringKeepingNewLocal<
+  T extends { id: string; updated_at?: string; created_at?: string },
+>(local: T[], remote: T[], now = Date.now()): T[] {
+  return mergeById(dropRemoteDeleted(local, remote, now), remote);
 }

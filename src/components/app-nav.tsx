@@ -38,8 +38,8 @@ export function AppNav() {
   return (
     <>
       {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4">
           <Link href="/dashboard" className="flex items-center gap-2 font-bold text-emerald-700">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-sm text-white">
               L
@@ -100,17 +100,23 @@ export function AppNav() {
       </header>
 
       {/* Bottom nav mobile */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-safe md:hidden">
-        <div className="mx-auto flex max-w-lg items-end justify-around px-0.5 pt-1">
+      <nav className="fixed inset-x-0 bottom-0 z-40 w-full border-t border-slate-200 bg-white pb-safe md:hidden">
+        <div className="grid grid-cols-5 items-end px-1 pt-1">
           {mobileLinks.map(({ href, label, icon: Icon, isUpload }) => {
             const active = pathname.startsWith(href);
             if (isUpload) {
               return (
-                <Link key={href} href={href} className="-mt-5 flex flex-col items-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-mustard text-white shadow-lg shadow-mustard/30">
+                <Link
+                  key={href}
+                  href={href}
+                  className="-mt-5 flex min-w-0 flex-col items-center"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-mustard text-white shadow-lg shadow-mustard/30">
                     <Camera className="h-6 w-6" />
                   </span>
-                  <span className="mt-0.5 text-[10px] font-medium text-amber-800">Foto</span>
+                  <span className="mt-0.5 max-w-full truncate text-[10px] font-medium text-amber-800">
+                    Foto
+                  </span>
                 </Link>
               );
             }
@@ -119,12 +125,12 @@ export function AppNav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex min-w-[52px] flex-col items-center gap-0.5 px-1.5 py-2 text-[10px] font-medium",
+                  "flex min-w-0 flex-col items-center gap-0.5 px-0.5 py-2 text-[10px] font-medium",
                   active ? "text-amber-800" : "text-slate-500"
                 )}
               >
-                <Icon className="h-5 w-5" />
-                {label}
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="max-w-full truncate">{label}</span>
               </Link>
             );
           })}

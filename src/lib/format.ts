@@ -34,5 +34,6 @@ export function monthKey(date = new Date()): string {
 export function monthLabel(key: string): string {
   const [y, m] = key.split("-").map(Number);
   const d = new Date(y, m - 1, 1);
-  return d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const s = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }

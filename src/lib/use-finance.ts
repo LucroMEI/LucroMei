@@ -28,6 +28,7 @@ import {
   fetchRemoteRecurring,
   fetchRemoteTransactions,
   mergeById,
+  mergeRecurringKeepingNewLocal,
   upsertRemoteRecurring,
   upsertRemoteTransactions,
 } from "./finance-sync";
@@ -120,20 +121,21 @@ export function useFinance(month?: { year: number; month: number }) {
         ]);
 
         let mergedTx = mergeById(localTx, remoteTx);
-        let mergedRec = mergeById(localRec, remoteRec);
+        let mergedRec = mergeRecurringKeepingNewLocal(localRec, remoteRec);
 
         const okTx = await upsertRemoteTransactions(supabase, mergedTx);
         const okRec = await upsertRemoteRecurring(supabase, mergedRec);
 
-        // Só substitui pelo remoto se o envio correu bem — senão mantém o merge
-        // (evita apagar o que acabou de salvar neste aparelho)
+        // Transações: une os dois lados para o que já foi debitado não sumir.
+        // Despesas fixas: se foi excluída noutro aparelho, some da lista daqui
+        // e não volta para o servidor.
         if (okTx) {
           const remoteAgain = await fetchRemoteTransactions(supabase, uid);
           mergedTx = mergeById(mergedTx, remoteAgain);
         }
         if (okRec) {
           const remoteAgain = await fetchRemoteRecurring(supabase, uid);
-          mergedRec = mergeById(mergedRec, remoteAgain);
+          mergedRec = mergeRecurringKeepingNewLocal(mergedRec, remoteAgain);
         }
 
         localTx = mergedTx;
@@ -167,7 +169,10 @@ export function useFinance(month?: { year: number; month: number }) {
           localTx = mergeById(localTx, await fetchRemoteTransactions(supabase, uid));
         }
         if (okRec) {
-          localRec = mergeById(localRec, await fetchRemoteRecurring(supabase, uid));
+          localRec = mergeRecurringKeepingNewLocal(
+            localRec,
+            await fetchRemoteRecurring(supabase, uid)
+          );
         }
         saveDemoTransactions(localTx, uid);
         saveDemoRecurring(localRec, uid);

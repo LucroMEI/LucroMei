@@ -56,9 +56,11 @@ export default function DespesasFixasPage() {
 
         {recurring.map((r) => (
           <Card key={r.id} className={!r.active ? "opacity-70" : undefined}>
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="font-semibold text-slate-900">{r.description}</p>
+                <p className="break-words font-semibold text-slate-900">
+                  {r.description}
+                </p>
                 <p className="text-sm text-slate-600">
                   {formatBRL(r.amount)}
                   {(r.frequency ?? "monthly") === "yearly"
@@ -81,11 +83,12 @@ export default function DespesasFixasPage() {
                   )}
                 </p>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="w-full sm:w-auto"
                   title={r.active ? "Pausar" : "Reativar"}
                   onClick={() => updateRecurring(r.id, { active: !r.active })}
                 >
@@ -105,7 +108,7 @@ export default function DespesasFixasPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                  className="w-full border-rose-200 text-rose-700 hover:bg-rose-50 sm:w-auto"
                   title="Excluir"
                   onClick={() => {
                     if (
