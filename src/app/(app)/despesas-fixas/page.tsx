@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Pause, Play, Repeat } from "lucide-react";
+import { Pause, Play, Repeat, Trash2 } from "lucide-react";
 import { useFinance } from "@/lib/use-finance";
 import { formatBRL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function DespesasFixasPage() {
-  const { ready, recurring, updateRecurring } = useFinance();
+  const { ready, recurring, updateRecurring, removeRecurring } = useFinance();
 
   if (!ready) {
     return <p className="text-sm text-slate-500">Carregando…</p>;
@@ -30,7 +30,7 @@ export default function DespesasFixasPage() {
           Despesas fixas
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Aqui só geres o que já é fixo: pausar ou reativar. Novas despesas
+          Aqui você pausa, reativa ou exclui o que já é fixo. Novas despesas
           fixas nascem ao salvar um comprovante (Foto) e indicar que é fixa.
         </p>
       </div>
@@ -48,8 +48,8 @@ export default function DespesasFixasPage() {
         {recurring.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center text-sm text-slate-500">
-              Nenhuma despesa fixa ainda. Quando salvares um comprovante como
-              fixa, ela aparece aqui.
+              Nenhuma despesa fixa ainda. Quando você salvar um comprovante
+              como fixa, ela aparece aqui.
             </CardContent>
           </Card>
         )}
@@ -81,25 +81,46 @@ export default function DespesasFixasPage() {
                   )}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                title={r.active ? "Pausar" : "Reativar"}
-                onClick={() => updateRecurring(r.id, { active: !r.active })}
-              >
-                {r.active ? (
-                  <>
-                    <Pause className="h-4 w-4" />
-                    Pausar
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4" />
-                    Reativar
-                  </>
-                )}
-              </Button>
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  title={r.active ? "Pausar" : "Reativar"}
+                  onClick={() => updateRecurring(r.id, { active: !r.active })}
+                >
+                  {r.active ? (
+                    <>
+                      <Pause className="h-4 w-4" />
+                      Pausar
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      Reativar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                  title="Excluir"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        "Excluir esta despesa fixa?\n\nEla some da lista e para de repetir. Os lançamentos já feitos em Transações ficam."
+                      )
+                    ) {
+                      removeRecurring(r.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
