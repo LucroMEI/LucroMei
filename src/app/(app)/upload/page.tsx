@@ -592,6 +592,9 @@ function UploadPageInner() {
 
       if (isFirstReceipt) {
         trackLead("primeiro_comprovante");
+        await new Promise((r) => setTimeout(r, 150));
+        router.push("/foto-ok");
+        return;
       }
 
       await new Promise((r) => setTimeout(r, 150));

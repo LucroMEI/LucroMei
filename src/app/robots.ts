@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
           "/assinatura",
           "/configuracoes",
           "/trial-acabou",
+          "/foto-ok",
           "/callback",
           "/nova-senha",
           "/api/",

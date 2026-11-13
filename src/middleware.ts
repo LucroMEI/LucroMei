@@ -10,6 +10,7 @@ const LOGGED_PREFIXES = [
   "/configuracoes",
   "/assinatura",
   "/trial-acabou",
+  "/foto-ok",
   "/app",
   "/conta",
 ] as const;
@@ -45,6 +46,8 @@ export const config = {
     "/assinatura/:path*",
     "/trial-acabou",
     "/trial-acabou/:path*",
+    "/foto-ok",
+    "/foto-ok/:path*",
     "/app",
     "/app/:path*",
     "/conta",
