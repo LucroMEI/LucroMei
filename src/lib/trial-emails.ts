@@ -1,6 +1,6 @@
 import { getSiteUrl } from "@/lib/site";
 
-export type TrialEmailKind = "d1" | "d3" | "d7";
+export type TrialEmailKind = "d1" | "d3" | "d7" | "d13";
 
 const INTERNAL_EMAIL_BITS = [
   "contato.lucromei",
@@ -47,7 +47,8 @@ export function trialDaysElapsed(createdAt: string, now = new Date()): number {
 export function pickTrialEmailKind(daysElapsed: number): TrialEmailKind | null {
   if (daysElapsed >= 1 && daysElapsed <= 2) return "d1";
   if (daysElapsed >= 3 && daysElapsed <= 6) return "d3";
-  if (daysElapsed >= 7 && daysElapsed <= 13) return "d7";
+  if (daysElapsed >= 7 && daysElapsed <= 11) return "d7";
+  if (daysElapsed >= 12 && daysElapsed <= 13) return "d13";
   return null;
 }
 
@@ -105,22 +106,48 @@ export function trialEmailContent(kind: TrialEmailKind, firstName: string) {
     };
   }
 
+  if (kind === "d7") {
+    return {
+      subject: "Metade do teste: quanto sobrou este mês?",
+      href: dashboard,
+      cta: "Ver meu lucro",
+      text: [
+        hello,
+        "",
+        "Já foi uma semana. Ainda tem 7 dias de teste.",
+        "",
+        "Quem manda os comprovantes vê o lucro do mês num lugar só, sem planilha.",
+        "",
+        "Tira foto do que entrou e do que saiu esta semana.",
+        "",
+        `Ver meu lucro: ${dashboard}`,
+        "",
+        "No fim dos 14 dias você escolhe se assina. Sem cartão agora, sem cobrança escondida.",
+        "",
+        "Sandra",
+        "LucroMei",
+      ].join("\n"),
+    };
+  }
+
+  const assinatura = `${site}/assinatura`;
   return {
-    subject: "Metade do teste: quanto sobrou este mês?",
-    href: dashboard,
-    cta: "Ver meu lucro",
+    subject: "O teste do LucroMei acaba em breve",
+    href: assinatura,
+    cta: "Escolher plano",
     text: [
       hello,
       "",
-      "Já foi uma semana. Ainda tem 7 dias de teste.",
+      "Seu teste de 14 dias está acabando.",
       "",
-      "Quem manda os comprovantes vê o lucro do mês num lugar só, sem planilha.",
+      "Se já viu o lucro do mês, escolhe um plano pra continuar. Early Bird a partir de R$ 19,90/mês.",
       "",
-      "Tira foto do que entrou e do que saiu esta semana.",
+      "Se ainda não mandou comprovante, tira foto agora pra decidir com o número na tela.",
       "",
-      `Ver meu lucro: ${dashboard}`,
+      `Escolher plano: ${assinatura}`,
+      `Mandar comprovante: ${upload}`,
       "",
-      "No fim dos 14 dias você escolhe se assina. Sem cartão agora, sem cobrança escondida.",
+      "No fim do teste você escolhe. Sem cartão agora, sem cobrança sozinha.",
       "",
       "Sandra",
       "LucroMei",
@@ -148,6 +175,12 @@ export function trialEmailHtml(kind: TrialEmailKind, firstName: string): string 
       "Quem manda os comprovantes vê o lucro do mês num lugar só, sem planilha.",
       "Tira foto do que entrou e do que saiu esta semana.",
       "No fim dos 14 dias você escolhe se assina. Sem cartão agora, sem cobrança escondida.",
+    ],
+    d13: [
+      "Seu teste de 14 dias está acabando.",
+      "Se já viu o lucro do mês, escolhe um plano pra continuar. Early Bird a partir de R$ 19,90/mês.",
+      "Se ainda não mandou comprovante, tira foto agora pra decidir com o número na tela.",
+      "No fim do teste você escolhe. Sem cartão agora, sem cobrança sozinha.",
     ],
   };
   const body = blocks[kind]

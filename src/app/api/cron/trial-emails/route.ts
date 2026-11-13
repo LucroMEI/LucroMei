@@ -12,6 +12,7 @@ import {
   trialEmailHtml,
   type TrialEmailKind,
 } from "@/lib/trial-emails";
+import { sendOwnerLead } from "@/lib/owner-leads";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -103,6 +104,8 @@ async function run(request: Request) {
   let sent = 0;
   let skipped = 0;
   let errors = 0;
+  const yesterdayRows: { name: string; email: string }[] = [];
+  let paidCount = 0;
 
   for (const user of users) {
     const email = user.email?.trim().toLowerCase() || "";
@@ -116,28 +119,34 @@ async function run(request: Request) {
       skipped += 1;
       continue;
     }
-    if (
-      hasPaidAccess({
-        subscription_status: (settings?.subscription_status || "trialing") as
-          | "trialing"
-          | "active"
-          | "past_due"
-          | "canceled"
-          | "incomplete"
-          | "none",
-        plan: (settings?.plan || "trial") as
-          | "trial"
-          | "monthly"
-          | "yearly"
-          | "earlybird"
-          | "none",
-      })
-    ) {
+    const paid = hasPaidAccess({
+      subscription_status: (settings?.subscription_status || "trialing") as
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "canceled"
+        | "incomplete"
+        | "none",
+      plan: (settings?.plan || "trial") as
+        | "trial"
+        | "monthly"
+        | "yearly"
+        | "earlybird"
+        | "none",
+    });
+    if (paid) {
+      paidCount += 1;
       skipped += 1;
       continue;
     }
 
     const days = trialDaysElapsed(user.created_at);
+    if (days === 1) {
+      yesterdayRows.push({
+        name: firstNameFrom(fullName, email),
+        email,
+      });
+    }
     const kind = pickTrialEmailKind(days);
     if (!kind) {
       skipped += 1;
@@ -185,5 +194,22 @@ async function run(request: Request) {
     sent += 1;
   }
 
-  return NextResponse.json({ ok: true, sent, skipped, errors });
+  let digest = "skipped";
+  if (yesterdayRows.length > 0) {
+    const recap = await sendOwnerLead("resumo", {
+      rows: yesterdayRows,
+      paidCount,
+    });
+    digest = recap.ok ? "sent" : recap.error || "failed";
+  }
+
+  return NextResponse.json({
+    ok: true,
+    sent,
+    skipped,
+    errors,
+    digest,
+    yesterday: yesterdayRows.length,
+    paidCount,
+  });
 }

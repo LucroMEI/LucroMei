@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Disclaimer } from "@/components/disclaimer";
 import { DEFAULT_CATEGORIES } from "@/lib/categories";
 import { useFinance } from "@/lib/use-finance";
+import { trackLead } from "@/lib/lead-client";
 import type { AiReceiptResult, TransactionType } from "@/lib/types";
 import { formatBRL } from "@/lib/format";
 import {
@@ -69,7 +70,7 @@ export default function UploadPage() {
 
 function UploadPageInner() {
   const router = useRouter();
-  const { addTransaction, addRecurring } = useFinance();
+  const { addTransaction, addRecurring, transactions } = useFinance();
   const [dragging, setDragging] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -575,6 +576,7 @@ function UploadPageInner() {
               ? " (anual)"
               : "";
 
+      const isFirstReceipt = transactions.length === 0;
       addTransaction({
         date,
         amount: amountNum,
@@ -587,6 +589,10 @@ function UploadPageInner() {
         source: recurringId ? "recorrente" : "upload",
         recurring_id: recurringId,
       });
+
+      if (isFirstReceipt) {
+        trackLead("primeiro_comprovante");
+      }
 
       await new Promise((r) => setTimeout(r, 150));
       const firstPhoto =

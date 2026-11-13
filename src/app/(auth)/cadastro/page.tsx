@@ -10,6 +10,7 @@ import { PasswordField } from "@/components/password-field";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { ensureUserSettings } from "@/lib/user-settings";
 import { rememberEmail } from "@/lib/saved-accounts";
+import { trackLead } from "@/lib/lead-client";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -66,6 +67,7 @@ export default function CadastroPage() {
 
       // Nesta fase: sem exigir verificação de e-mail — entra no app se houver sessão
       if (data.session) {
+        trackLead("cadastro", data.session.access_token);
         router.push("/upload?primeiro=1");
         router.refresh();
         return;
@@ -87,6 +89,7 @@ export default function CadastroPage() {
             // ignore
           }
         }
+        trackLead("cadastro", signInData.session.access_token);
         router.push("/upload?primeiro=1");
         router.refresh();
         return;

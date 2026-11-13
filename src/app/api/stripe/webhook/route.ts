@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { applyCheckoutSession, applySubscriptionObject } from "@/lib/stripe-sync";
+import { createAdminClient, isAdminConfigured } from "@/lib/supabase/admin";
+import { sendOwnerLead } from "@/lib/owner-leads";
 import type Stripe from "stripe";
 
 export const runtime = "nodejs";
@@ -57,6 +59,11 @@ export async function POST(request: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.mode === "subscription") {
           await applyCheckoutSession(session, stripe);
+          try {
+            await notifyOwnerOfPaidCheckout(session);
+          } catch (err) {
+            console.error("[webhook] owner lead", err);
+          }
         }
         break;
       }
@@ -76,4 +83,40 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+async function notifyOwnerOfPaidCheckout(session: Stripe.Checkout.Session) {
+  const userId =
+    session.client_reference_id ||
+    session.metadata?.supabase_user_id ||
+    null;
+  const plan = session.metadata?.plan || null;
+  let fullName: string | null = null;
+  let email: string | null =
+    session.customer_details?.email || session.customer_email || null;
+
+  if (userId && isAdminConfigured()) {
+    try {
+      const admin = createAdminClient();
+      const { data } = await admin.auth.admin.getUserById(userId);
+      email = data.user?.email || email;
+      fullName =
+        (data.user?.user_metadata?.full_name as string | undefined) || null;
+      if (!fullName) {
+        const { data: settings } = await admin
+          .from("user_settings")
+          .select("full_name")
+          .eq("user_id", userId)
+          .maybeSingle();
+        fullName = (settings?.full_name as string | null) || null;
+      }
+    } catch (err) {
+      console.error(
+        "[webhook] owner lead lookup",
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
+
+  await sendOwnerLead("assinatura", { fullName, email, plan });
 }
