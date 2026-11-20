@@ -11,6 +11,7 @@ import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { ensureUserSettings } from "@/lib/user-settings";
 import { rememberEmail } from "@/lib/saved-accounts";
 import { trackLead } from "@/lib/lead-client";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function CadastroPage() {
         },
       });
       if (err) {
-        setError(err.message);
+        setError(authErrorMessage(err, "Não deu para criar a conta. Tenta de novo."));
         return;
       }
 
@@ -67,7 +68,7 @@ export default function CadastroPage() {
 
       // Nesta fase: sem exigir verificação de e-mail — entra no app se houver sessão
       if (data.session) {
-        trackLead("cadastro", data.session.access_token);
+        await trackLead("cadastro", data.session.access_token);
         router.push("/upload?primeiro=1");
         router.refresh();
         return;
@@ -89,7 +90,7 @@ export default function CadastroPage() {
             // ignore
           }
         }
-        trackLead("cadastro", signInData.session.access_token);
+        await trackLead("cadastro", signInData.session.access_token);
         router.push("/upload?primeiro=1");
         router.refresh();
         return;
@@ -99,7 +100,7 @@ export default function CadastroPage() {
       setNeedsEmailConfirm(true);
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar conta");
+      setError(authErrorMessage(err, "Erro ao criar conta"));
     } finally {
       setLoading(false);
     }
@@ -115,12 +116,10 @@ export default function CadastroPage() {
       </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Criar conta</CardTitle>
+          <CardTitle>Começar o teste</CardTitle>
           <CardDescription>
-            <strong>14 dias grátis</strong> a partir do cadastro ·{" "}
-            <strong>sem cartão</strong> · sem cobrança automática. Se gostar, assina
-            a partir de R$ 19,90/mês (Early Bird) ou R$ 29,90/mês; se não,
-            encerra o teste e não paga nada.
+            <strong>14 dias grátis</strong>, <strong>sem cartão</strong>. Depois é
+            só tirar foto do último PIX ou da notinha.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,13 +195,8 @@ export default function CadastroPage() {
                 {loading ? "Criando…" : "Começar 14 dias grátis"}
               </Button>
               <p className="text-center text-[11px] leading-relaxed text-slate-500">
-                Ao criar a conta, começam os 14 dias grátis (sem cartão). No fim do
-                teste, o app pede assinatura só se você quiser seguir usando —{" "}
-                <strong>não cobramos sozinho</strong>. Pode parar quando quiser.
-              </p>
-              <p className="text-center text-[11px] leading-relaxed text-slate-500">
-                Com várias contas: aceite “guardar senha” no Chrome/Edge/Safari — o
-                navegador memoriza e-mail + senha de cada uma com segurança.
+                Sem cartão. Sem cobrança sozinha. Só paga se quiser continuar
+                depois dos 14 dias.
               </p>
             </form>
           )}

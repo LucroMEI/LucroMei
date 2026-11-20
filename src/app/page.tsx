@@ -170,7 +170,7 @@ export default function LandingPage() {
               caixa no dia a dia — sem termos contábeis complicados.
             </p>
 
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3">
               <Link href="/cadastro">
                 <Button
                   size="lg"
@@ -180,22 +180,17 @@ export default function LandingPage() {
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="min-w-[230px] border-2 border-slate-300 bg-white text-base font-semibold text-slate-800 hover:bg-slate-50"
-                >
-                  Já tenho conta
-                </Button>
+              <Link
+                href="/login"
+                className="text-sm font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
+              >
+                Já tenho conta
               </Link>
             </div>
 
             <p className="mx-auto mt-4 max-w-lg text-center text-sm font-medium leading-relaxed text-slate-600">
-              Crie sua conta e use <strong>14 dias grátis</strong>, sem cartão.
-              Depois, se gostar, assina a partir de <strong>R$ 19,90/mês</strong>{" "}
-              (Early Bird) ou <strong>R$ 29,90/mês</strong> — sem gostar, não
-              paga nada.
+              <strong>14 dias grátis</strong>, sem cartão. O próximo passo é
+              tirar foto do comprovante — PIX, notinha ou print da galeria.
             </p>
 
             <div className="mx-auto mt-8 max-w-md">
@@ -284,13 +279,14 @@ export default function LandingPage() {
                 </h2>
                 <p className="mt-1.5 text-sm font-medium leading-relaxed text-slate-600 md:text-base">
                   Descubra se a projeção do seu faturamento fica dentro, perto ou
-                  acima do teto anual — em segundos, sem cadastro.
+                  acima do teto anual — em segundos.
                 </p>
               </div>
               <Link href="/calculadora" className="shrink-0">
                 <Button
                   size="lg"
-                  className="min-w-[200px] bg-emerald-600 font-bold hover:bg-emerald-700"
+                  variant="outline"
+                  className="min-w-[200px] border-2 border-emerald-600 bg-white font-bold text-emerald-800 hover:bg-emerald-50"
                 >
                   Calcular agora
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PasswordField } from "@/components/password-field";
 import { isSupabaseConfigured, createClient } from "@/lib/supabase/client";
 import { getRecentEmails, rememberEmail } from "@/lib/saved-accounts";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 function safeNext(value: string | null) {
   if (value && value.startsWith("/") && !value.startsWith("//")) return value;
@@ -68,7 +69,7 @@ export default function LoginPage() {
             "E-mail ou senha incorretos. Se você criou a conta com Google, use o botão Continuar com Google."
           );
         } else {
-          setError(msg);
+          setError(authErrorMessage(err, msg));
         }
         return;
       }
@@ -88,7 +89,7 @@ export default function LoginPage() {
       router.push(next);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao entrar");
+      setError(authErrorMessage(err, "Erro ao entrar"));
     } finally {
       setLoading(false);
     }
@@ -109,11 +110,11 @@ export default function LoginPage() {
         options: { redirectTo: `${origin}/callback?next=${encodeURIComponent(next)}` },
       });
       if (err) {
-        setError(err.message);
+        setError(authErrorMessage(err, "Não deu para entrar com Google."));
         setGoogleLoading(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao entrar com Google");
+      setError(authErrorMessage(err, "Erro ao entrar com Google"));
       setGoogleLoading(false);
     }
   }

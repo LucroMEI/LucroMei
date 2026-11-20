@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Camera,
   FileUp,
+  Images,
   Loader2,
   Sparkles,
   Check,
@@ -38,7 +39,8 @@ function UploadHeading() {
           Primeiro passo: tira foto do último PIX ou da notinha
         </h1>
         <p className="text-sm text-slate-600">
-          PIX, notinha ou recibo. Aí o LucroMei lê e mostra quanto sobrou.
+          PIX, notinha ou recibo — da câmera ou do print na galeria. Aí o
+          LucroMei lê e mostra quanto sobrou.
         </p>
       </div>
     );
@@ -88,6 +90,7 @@ function UploadPageInner() {
   const [installments, setInstallments] = useState("12");
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -591,8 +594,7 @@ function UploadPageInner() {
       });
 
       if (isFirstReceipt) {
-        trackLead("primeiro_comprovante");
-        await new Promise((r) => setTimeout(r, 150));
+        await trackLead("primeiro_comprovante");
         router.push("/foto-ok");
         return;
       }
@@ -628,7 +630,16 @@ function UploadPageInner() {
         onChange={onPick}
         disabled={analyzing}
       />
-      {/* Só PDF — sem câmera no seletor (Windows/Android mostram câmera se aceitar image/*) */}
+      {/* Sem capture: abre a galeria (print do PIX). */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onPick}
+        disabled={analyzing}
+      />
+      {/* Só PDF — sem image/* para o seletor não virar câmera no Android */}
       <input
         ref={galleryInputRef}
         type="file"
@@ -679,7 +690,7 @@ function UploadPageInner() {
                   Foto do comprovante
                 </p>
                 <p className="mt-1 text-center text-xs text-slate-500">
-                  Foto pela câmera ou arquivo PDF do comprovante
+                  Câmera, print do PIX na galeria, ou PDF
                 </p>
               </>
             )}
@@ -693,6 +704,16 @@ function UploadPageInner() {
               >
                 <Camera className="h-4 w-4" />
                 Tirar foto
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={analyzing}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                <Images className="h-4 w-4" />
+                Galeria
               </Button>
               <Button
                 type="button"
