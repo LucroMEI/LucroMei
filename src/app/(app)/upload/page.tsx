@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Camera,
   FileUp,
-  Images,
   Loader2,
   Sparkles,
   Check,
@@ -39,8 +38,8 @@ function UploadHeading() {
           Primeiro passo: tira foto do último PIX ou da notinha
         </h1>
         <p className="text-sm text-slate-600">
-          PIX, notinha ou recibo — da câmera ou do print na galeria. Aí o
-          LucroMei lê e mostra quanto sobrou.
+          Tira foto agora ou importa o print do PIX, a notinha ou o PDF.
+          Aí o LucroMei lê e mostra quanto sobrou.
         </p>
       </div>
     );
@@ -49,8 +48,8 @@ function UploadHeading() {
     <div>
       <h1 className="text-2xl font-bold">Enviar comprovante</h1>
       <p className="text-sm text-slate-600">
-        Tire uma foto ou envie um PDF. A leitura preenche valor, data e
-        categoria — confira e salve.
+        Tire uma foto ou importe o arquivo (foto, print ou PDF). A leitura
+        preenche valor, data e categoria — confira e salve.
       </p>
     </div>
   );
@@ -90,8 +89,7 @@ function UploadPageInner() {
   const [installments, setInstallments] = useState("12");
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -118,7 +116,7 @@ function UploadPageInner() {
       stopCamera();
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError(
-          "Este navegador não permite câmera. Use o botão «PDF» ou abra no Chrome."
+          "Este navegador não permite câmera. Use Importar ou abra no Chrome."
         );
         return;
       }
@@ -190,17 +188,17 @@ function UploadPageInner() {
           "Permissão da câmera negada. No Chrome: ícone de cadeado na barra de endereço → Câmera → Permitir."
         );
       } else if (name === "NotFoundError") {
-        setCameraError("Nenhuma câmera encontrada. Use o botão «PDF».");
+        setCameraError("Nenhuma câmera encontrada. Use Importar.");
       } else if (
         name === "NotReadableError" ||
         /could not start video source/i.test(raw)
       ) {
         setCameraError(
-          "A câmera está em uso ou indisponível. Feche Teams, Zoom, Skype ou o app Câmera do Windows e tente de novo. Ou use «PDF»."
+          "A câmera está em uso ou indisponível. Feche Teams, Zoom, Skype ou o app Câmera do Windows e tente de novo. Ou use Importar."
         );
       } else {
         setCameraError(
-          "Não foi possível abrir a câmera neste computador. Use «PDF» para enviar o comprovante."
+          "Não foi possível abrir a câmera neste computador. Use Importar para enviar o comprovante."
         );
       }
     },
@@ -620,7 +618,7 @@ function UploadPageInner() {
     <div className="mx-auto max-w-xl space-y-6">
       <UploadHeading />
 
-      {/* inputs ocultos separados: câmera nativa vs ficheiros */}
+      {/* Câmera nativa vs um único Importar (foto, print ou PDF). */}
       <input
         ref={cameraInputRef}
         type="file"
@@ -630,20 +628,10 @@ function UploadPageInner() {
         onChange={onPick}
         disabled={analyzing}
       />
-      {/* Sem capture: abre a galeria (print do PIX). */}
       <input
-        ref={photoInputRef}
+        ref={importInputRef}
         type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={onPick}
-        disabled={analyzing}
-      />
-      {/* Só PDF — sem image/* para o seletor não virar câmera no Android */}
-      <input
-        ref={galleryInputRef}
-        type="file"
-        accept="application/pdf,.pdf"
+        accept="image/*,application/pdf,.pdf"
         className="hidden"
         onChange={onPick}
         disabled={analyzing}
@@ -690,7 +678,7 @@ function UploadPageInner() {
                   Foto do comprovante
                 </p>
                 <p className="mt-1 text-center text-xs text-slate-500">
-                  Câmera, print do PIX na galeria, ou PDF
+                  Tira foto ou importa um arquivo (foto, print ou PDF)
                 </p>
               </>
             )}
@@ -710,20 +698,10 @@ function UploadPageInner() {
                 variant="outline"
                 className="w-full sm:w-auto"
                 disabled={analyzing}
-                onClick={() => photoInputRef.current?.click()}
-              >
-                <Images className="h-4 w-4" />
-                Galeria
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                disabled={analyzing}
-                onClick={() => galleryInputRef.current?.click()}
+                onClick={() => importInputRef.current?.click()}
               >
                 <FileUp className="h-4 w-4" />
-                PDF
+                Importar
               </Button>
             </div>
 
@@ -801,11 +779,11 @@ function UploadPageInner() {
                 className="text-white hover:bg-white/10"
                 onClick={() => {
                   setCameraOpen(false);
-                  galleryInputRef.current?.click();
+                  importInputRef.current?.click();
                 }}
               >
                 <FileUp className="h-4 w-4" />
-                PDF
+                Importar
               </Button>
             </div>
           </div>

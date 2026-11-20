@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Camera, Images } from "lucide-react";
+import { Camera, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function FirstPhotoGate({ onSkip }: { onSkip: () => void }) {
@@ -15,8 +15,8 @@ export function FirstPhotoGate({ onSkip }: { onSkip: () => void }) {
           Tira foto do último comprovante
         </h1>
         <p className="text-sm leading-relaxed text-slate-600">
-          PIX, notinha ou print na galeria. Aí o LucroMei lê e mostra quanto
-          sobrou. Sem o comprovante, o painel fica vazio.
+          PIX, notinha ou PDF. Tira foto ou importa o arquivo. Aí o LucroMei
+          lê e mostra quanto sobrou. Sem o comprovante, o painel fica vazio.
         </p>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
@@ -28,8 +28,8 @@ export function FirstPhotoGate({ onSkip }: { onSkip: () => void }) {
         </Link>
         <Link href="/upload?primeiro=1" className="w-full sm:w-auto">
           <Button size="lg" variant="outline" className="w-full bg-white">
-            <Images className="h-5 w-5" />
-            Escolher da galeria
+            <FileUp className="h-5 w-5" />
+            Importar
           </Button>
         </Link>
       </div>

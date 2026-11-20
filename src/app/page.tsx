@@ -190,7 +190,7 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-4 max-w-lg text-center text-sm font-medium leading-relaxed text-slate-600">
               <strong>14 dias grátis</strong>, sem cartão. O próximo passo é
-              tirar foto do comprovante — PIX, notinha ou print da galeria.
+              mandar o comprovante — tira foto ou importa o arquivo.
             </p>
 
             <div className="mx-auto mt-8 max-w-md">
