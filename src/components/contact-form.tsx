@@ -68,9 +68,6 @@ export function ContactForm() {
               >
                 {INSTAGRAM_HANDLE}
               </a>
-              <p className="mt-1 text-xs text-slate-500">
-                Melhor canal para os primeiros testes e DMs.
-              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -83,9 +80,6 @@ export function ContactForm() {
               >
                 contato.lucromei@gmail.com
               </a>
-              <p className="mt-1 text-xs text-slate-500">
-                Você pode trocar por e-mail com domínio próprio depois.
-              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">

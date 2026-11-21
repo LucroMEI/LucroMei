@@ -387,8 +387,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl px-4 text-center">
             <h2 className="text-xl font-extrabold text-slate-900">Transparência</h2>
             <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-slate-600">
-              Antes de assinar, leia os documentos e tire suas dúvidas. Estamos em
-              validação e respondemos com atenção.
+              Antes de assinar, leia os documentos e tire suas dúvidas.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               {[
