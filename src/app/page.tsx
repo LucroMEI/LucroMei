@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
 import { InstagramLink } from "@/components/instagram-link";
+import { DemoVideo } from "@/components/demo-video";
 import {
   canonicalUrl,
   SITE_DESCRIPTION,
@@ -313,6 +314,26 @@ export default function LandingPage() {
           </ol>
         </section>
 
+        {/* Veja funcionando */}
+        <section className="border-t border-slate-200 bg-white px-4 py-16">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+              Veja funcionando
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-base font-medium text-slate-600">
+              Tire a foto do comprovante, o app lê e preenche sozinho. Você
+              confere e salva.
+            </p>
+            <div className="mx-auto mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
+              <DemoVideo
+                src="/videos/demo.mp4"
+                poster="/videos/demo.jpg"
+                title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Pricing */}
         <section className="border-t border-slate-200 bg-slate-50 py-16">
           <div className="mx-auto max-w-5xl px-4 text-center">
@@ -408,6 +429,41 @@ export default function LandingPage() {
                   </Button>
                 </Link>
               ))}
+            </div>
+          </div>
+        </section>
+
+
+        {/* Quem criou a LucroMEI */}
+        <section className="border-t border-slate-200 bg-slate-50 px-4 py-16">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
+            <video
+              className="w-full max-w-[320px] rounded-2xl border border-slate-200 bg-black shadow-sm"
+              src="/videos/apresentacao.mp4"
+              poster="/videos/apresentacao.jpg"
+              controls
+              playsInline
+              preload="metadata"
+              title="Sandra, fundadora da LucroMEI, se apresenta"
+            >
+              Seu navegador não reproduz vídeo.
+            </video>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+                Quem criou a LucroMEI
+              </h2>
+              <p className="mt-3 text-base font-medium leading-relaxed text-slate-700">
+                Eu sou a Sandra. Eu uso a LucroMEI todo mês para controlar as
+                contas da minha própria empresa.
+              </p>
+              <a
+                href="https://www.instagram.com/lucromei.oficial/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block font-semibold text-emerald-700 hover:underline"
+              >
+                Siga no Instagram @lucromei.oficial
+              </a>
             </div>
           </div>
         </section>
