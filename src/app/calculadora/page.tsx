@@ -10,8 +10,8 @@ import { formatBRL } from "@/lib/format";
 import { LIMITE_MEI_ANUAL } from "@/lib/taxes";
 import { canonicalUrl } from "@/lib/site";
 
-const title = "Calculadora do limite MEI 2026";
-const description = `Calcule grátis se você está perto do teto de faturamento MEI (${formatBRL(LIMITE_MEI_ANUAL)}/ano). Projeção simples + quanto ainda cabe no limite.`;
+const title = "Calculadora MEI: limite de R$ 81 mil";
+const description = "Use a calculadora MEI grátis e veja se a projeção do faturamento fica dentro, perto ou acima do limite de R$ 81 mil por ano.";
 
 export const metadata: Metadata = {
   title,
