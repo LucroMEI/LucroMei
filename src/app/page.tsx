@@ -326,8 +326,8 @@ export default function LandingPage() {
             </p>
             <div className="mx-auto mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
               <DemoVideo
-                src="/videos/demo.mp4"
-                poster="/videos/demo.jpg"
+                src="/videos/demo.mp4?v=2"
+                poster="/videos/demo.jpg?v=2"
                 title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
               />
             </div>
