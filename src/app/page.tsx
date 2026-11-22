@@ -200,8 +200,42 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Veja funcionando */}
+        <section className="border-t border-slate-200 bg-white px-4 py-16">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+              Veja funcionando
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-base font-medium text-slate-600">
+              Tire a foto do comprovante, o app lê e preenche sozinho. Você
+              confere e salva.
+            </p>
+            <div className="mx-auto mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
+              <DemoVideo
+                src="/videos/demo.mp4?v=2"
+                poster="/videos/demo.jpg?v=2"
+                title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
+              />
+            </div>
+            <div className="mt-8 flex flex-col items-center">
+              <Link href="/cadastro">
+                <Button
+                  size="lg"
+                  className="min-w-[230px] bg-mustard text-base font-bold text-white shadow-md hover:bg-mustard-dark"
+                >
+                  Testar grátis por 14 dias
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                </Button>
+              </Link>
+              <p className="mt-3 text-sm font-medium text-slate-600">
+                Sem cartão
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Demo card — alto contraste */}
-        <section className="mx-auto -mt-2 max-w-md px-4 pb-16 md:-mt-6">
+        <section className="mx-auto max-w-md px-4 pb-16">
           <div className="demo-phone rounded-2xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-bold text-slate-800">Resumo do caixa</span>
@@ -312,26 +346,6 @@ export default function LandingPage() {
               </li>
             ))}
           </ol>
-        </section>
-
-        {/* Veja funcionando */}
-        <section className="border-t border-slate-200 bg-white px-4 py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-              Veja funcionando
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-base font-medium text-slate-600">
-              Tire a foto do comprovante, o app lê e preenche sozinho. Você
-              confere e salva.
-            </p>
-            <div className="mx-auto mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
-              <DemoVideo
-                src="/videos/demo.mp4?v=2"
-                poster="/videos/demo.jpg?v=2"
-                title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
-              />
-            </div>
-          </div>
         </section>
 
         {/* Pricing */}
