@@ -150,8 +150,8 @@ export default function LandingPage() {
       <main>
         {/* Hero nítido */}
         <section className="landing-hero">
-          <div className="mx-auto max-w-5xl px-4 pb-14 pt-10 text-center md:pb-20 md:pt-16">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
+          <div className="mx-auto max-w-5xl px-5 pb-16 pt-12 text-center md:pb-24 md:pt-20">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
               <Shield className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
               Feito para MEIs do Brasil
             </div>
@@ -164,31 +164,16 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <ul className="mx-auto mt-5 flex max-w-xl flex-col items-center gap-2 text-sm font-semibold text-slate-800 md:text-base">
-              <li className="flex items-start gap-2 text-left">
-                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
-                <span>Funciona direto no navegador do celular. Não precisa baixar nada.</span>
-              </li>
-              <li className="flex items-start gap-2 text-left">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
-                <span>
-                  App particular para organizar o dinheiro do seu MEI — não é o
-                  app do governo.
-                </span>
-              </li>
-            </ul>
-
-            <p className="mx-auto mt-4 max-w-xl text-base font-medium leading-relaxed text-slate-700 md:text-lg">
-              Feito para quem trabalha sozinho e não quer planilha. Leitura
-              automática do comprovante, lucro estimado simples e acompanhamento do
-              caixa no dia a dia — sem termos contábeis complicados.
+            <p className="mx-auto mt-6 max-w-md text-lg font-medium leading-relaxed text-slate-600 md:text-xl">
+              Sem planilha, sem termos difíceis. Você fotografa, o LucroMEI
+              calcula.
             </p>
 
-            <div className="mt-8 flex flex-col items-center justify-center gap-3">
+            <div className="mt-10 flex flex-col items-center justify-center gap-4">
               <Link href="/cadastro">
                 <Button
                   size="lg"
-                  className="min-w-[230px] bg-mustard text-base font-bold text-white shadow-md hover:bg-mustard-dark"
+                  className="min-w-[250px] rounded-full bg-mustard px-7 text-base font-bold text-white shadow-md hover:bg-mustard-dark"
                 >
                   Criar conta · 14 dias grátis
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
@@ -202,13 +187,23 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="mx-auto mt-4 max-w-lg text-center text-sm font-medium leading-relaxed text-slate-600">
-              <strong>14 dias grátis</strong>, sem cartão. O próximo passo é
-              mandar o comprovante — tira foto ou importa o arquivo.
-            </p>
+            <ul className="mx-auto mt-8 flex max-w-lg flex-wrap md:max-w-3xl items-center justify-center gap-2 text-xs font-medium text-slate-600 md:text-sm">
+              <li className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                14 dias grátis, sem cartão
+              </li>
+              <li className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5">
+                <Smartphone className="h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                Funciona no navegador, sem baixar
+              </li>
+              <li className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5">
+                <Shield className="h-3.5 w-3.5 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                App particular, não é do governo
+              </li>
+            </ul>
 
             {/* Veja funcionando — logo depois do botão principal */}
-            <div className="mx-auto mt-8 max-w-3xl">
+            <div className="mx-auto mt-16 max-w-3xl">
               <h2 className="text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
                 Veja funcionando
               </h2>
@@ -225,7 +220,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <Disclaimer short className="mx-auto mt-6 max-w-md" />
+            <Disclaimer short className="mx-auto mt-8 max-w-md" />
           </div>
         </section>
 
