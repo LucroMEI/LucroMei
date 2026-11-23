@@ -1,10 +1,12 @@
 import { AppNav } from "@/components/app-nav";
 import { Disclaimer } from "@/components/disclaimer";
 import { TrialBanner } from "@/components/trial-banner";
+import { OAuthSignupTracker } from "@/components/oauth-signup-tracker";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#FAF6EE]">
+      <OAuthSignupTracker />
       <AppNav />
       <TrialBanner />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 pb-28 md:pb-10">

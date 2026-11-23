@@ -69,9 +69,9 @@ export function BlogShell({
           </div>
         </div>
         <p className="mt-8 text-xs leading-relaxed text-slate-500">
-          <strong>Estimativas apenas.</strong> O LucroMEI ajuda a organizar
-          finanças e estimar impostos, mas <strong>não substitui um contador</strong>{" "}
-          nem é assessoria fiscal oficial.
+          O LucroMEI organiza suas finanças e estima seus impostos para você
+          decidir com mais segurança. Para declarações oficiais, conte também
+          com seu contador.
         </p>
       </main>
       <SiteFooter />

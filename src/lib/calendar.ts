@@ -61,7 +61,7 @@ export function buildDasIcs(event: DasCalendarEvent): string {
     `Lembrete LucroMEI: vencimento do DAS MEI.`,
     `Valor estimado: ${amount} (confira no PGMEI — estimativa do app).`,
     `Pague no Portal do Empreendedor / app PGMEI.`,
-    `Estimativas apenas. Não substitui contador.`,
+    `Valores estimados pelo LucroMEI. Para declarações oficiais, conte também com seu contador.`,
   ].join("\\n");
 
   const uid = `das-${toIcsDate(start)}-${event.amountBrl}@lucromei.app`;
@@ -122,7 +122,7 @@ export function googleCalendarUrl(event: DasCalendarEvent): string {
     "Lembrete LucroMEI: vencimento do DAS MEI.",
     `Valor estimado: ${amount} (confira no PGMEI).`,
     "Pague no Portal do Empreendedor / PGMEI.",
-    "Estimativas apenas — não substitui contador.",
+    "Valores estimados pelo LucroMEI. Para declarações oficiais, conte também com seu contador.",
   ].join("\n");
 
   const params = new URLSearchParams({

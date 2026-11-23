@@ -9,11 +9,11 @@ import {
   Bell,
   ArrowRight,
   Calculator,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
-import { InstagramLink } from "@/components/instagram-link";
 import { DemoVideo } from "@/components/demo-video";
 import {
   canonicalUrl,
@@ -133,7 +133,6 @@ export default function LandingPage() {
             <span className="text-lg">LucroMEI</span>
           </div>
           <div className="flex items-center gap-2">
-            <InstagramLink />
             <Link href="/login">
               <Button variant="ghost" size="sm" className="text-slate-700">
                 Entrar
@@ -165,7 +164,21 @@ export default function LandingPage() {
               </span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-xl text-base font-medium leading-relaxed text-slate-700 md:text-lg">
+            <ul className="mx-auto mt-5 flex max-w-xl flex-col items-center gap-2 text-sm font-semibold text-slate-800 md:text-base">
+              <li className="flex items-start gap-2 text-left">
+                <Smartphone className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                <span>Funciona direto no navegador do celular. Não precisa baixar nada.</span>
+              </li>
+              <li className="flex items-start gap-2 text-left">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
+                <span>
+                  App particular para organizar o dinheiro do seu MEI — não é o
+                  app do governo.
+                </span>
+              </li>
+            </ul>
+
+            <p className="mx-auto mt-4 max-w-xl text-base font-medium leading-relaxed text-slate-700 md:text-lg">
               Feito para quem trabalha sozinho e não quer planilha. Leitura
               automática do comprovante, lucro estimado simples e acompanhamento do
               caixa no dia a dia — sem termos contábeis complicados.
@@ -194,48 +207,64 @@ export default function LandingPage() {
               mandar o comprovante — tira foto ou importa o arquivo.
             </p>
 
-            <div className="mx-auto mt-8 max-w-md">
-              <Disclaimer />
+            {/* Veja funcionando — logo depois do botão principal */}
+            <div className="mx-auto mt-8 max-w-3xl">
+              <h2 className="text-xl font-extrabold tracking-tight text-slate-900 md:text-2xl">
+                Veja funcionando
+              </h2>
+              <p className="mx-auto mt-1 max-w-xl text-sm font-medium text-slate-600 md:text-base">
+                Tire a foto do comprovante, o app lê e preenche sozinho. Você
+                confere e salva.
+              </p>
+              <div className="mx-auto mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
+                <DemoVideo
+                  src="/videos/demo.mp4?v=2"
+                  poster="/videos/demo.jpg?v=2"
+                  title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
+                />
+              </div>
             </div>
+
+            <Disclaimer short className="mx-auto mt-6 max-w-md" />
           </div>
         </section>
 
-        {/* Veja funcionando */}
-        <section className="border-t border-slate-200 bg-white px-4 py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-              Veja funcionando
-            </h2>
-            <p className="mx-auto mt-2 max-w-xl text-base font-medium text-slate-600">
-              Tire a foto do comprovante, o app lê e preenche sozinho. Você
-              confere e salva.
-            </p>
-            <div className="mx-auto mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-sm">
-              <DemoVideo
-                src="/videos/demo.mp4?v=2"
-                poster="/videos/demo.jpg?v=2"
-                title="Demonstração da LucroMEI: foto do comprovante, leitura e salvamento"
-              />
-            </div>
-            <div className="mt-8 flex flex-col items-center">
-              <Link href="/cadastro">
-                <Button
-                  size="lg"
-                  className="min-w-[230px] bg-mustard text-base font-bold text-white shadow-md hover:bg-mustard-dark"
-                >
-                  Testar grátis por 14 dias
-                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-                </Button>
-              </Link>
-              <p className="mt-3 text-sm font-medium text-slate-600">
-                Sem cartão
+        {/* Quem criou a LucroMEI */}
+        <section className="border-t border-slate-200 bg-slate-50 px-4 py-16">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
+            <video
+              className="w-full max-w-[320px] rounded-2xl border border-slate-200 bg-black shadow-sm"
+              src="/videos/apresentacao.mp4"
+              poster="/videos/apresentacao.jpg"
+              controls
+              playsInline
+              preload="metadata"
+              title="Sandra, fundadora da LucroMEI, se apresenta"
+            >
+              Seu navegador não reproduz vídeo.
+            </video>
+            <div className="text-center md:text-left">
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+                Quem criou a LucroMEI
+              </h2>
+              <p className="mt-3 text-base font-medium leading-relaxed text-slate-700">
+                Eu sou a Sandra. Eu uso a LucroMEI todo mês para controlar as
+                contas da minha própria empresa.
               </p>
+              <a
+                href="https://www.instagram.com/lucromei.oficial/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block font-semibold text-emerald-700 hover:underline"
+              >
+                Siga no Instagram @lucromei.oficial
+              </a>
             </div>
           </div>
         </section>
 
         {/* Demo card — alto contraste */}
-        <section className="mx-auto max-w-md px-4 pb-16">
+        <section className="mx-auto max-w-md px-4 py-16">
           <div className="demo-phone rounded-2xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm font-bold text-slate-800">Resumo do caixa</span>
@@ -447,40 +476,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-
-        {/* Quem criou a LucroMEI */}
-        <section className="border-t border-slate-200 bg-slate-50 px-4 py-16">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
-            <video
-              className="w-full max-w-[320px] rounded-2xl border border-slate-200 bg-black shadow-sm"
-              src="/videos/apresentacao.mp4"
-              poster="/videos/apresentacao.jpg"
-              controls
-              playsInline
-              preload="metadata"
-              title="Sandra, fundadora da LucroMEI, se apresenta"
-            >
-              Seu navegador não reproduz vídeo.
-            </video>
-            <div className="text-center md:text-left">
-              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
-                Quem criou a LucroMEI
-              </h2>
-              <p className="mt-3 text-base font-medium leading-relaxed text-slate-700">
-                Eu sou a Sandra. Eu uso a LucroMEI todo mês para controlar as
-                contas da minha própria empresa.
-              </p>
-              <a
-                href="https://www.instagram.com/lucromei.oficial/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-block font-semibold text-emerald-700 hover:underline"
-              >
-                Siga no Instagram @lucromei.oficial
-              </a>
-            </div>
-          </div>
-        </section>
 
         {/* CTA final */}
         <section className="border-t border-slate-200 bg-emerald-600 px-4 py-14 text-center">

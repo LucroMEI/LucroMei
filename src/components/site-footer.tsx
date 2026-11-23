@@ -18,8 +18,10 @@ export function SiteFooter() {
           <div>
             <p className="font-semibold text-emerald-700">LucroMEI</p>
             <p className="mt-1 max-w-xs text-xs text-slate-500">
-              Organização financeira para MEIs do Brasil. Estimativas apenas —
-              não substitui contador.
+              Organização financeira para MEIs do Brasil. O LucroMEI organiza
+              suas finanças e estima seus impostos para você decidir com mais
+              segurança. Para declarações oficiais, conte também com seu
+              contador.
             </p>
             <div className="mt-3 space-y-1 text-xs text-slate-500">
               <p>

@@ -115,9 +115,10 @@ export default function CalculadoraPage() {
           </p>
           <p>
             Estourar o teto pode levar a <strong>desenquadramento</strong> e
-            mudança de regime tributário. Esta calculadora é só uma{" "}
-            <strong>estimativa didática</strong>: não substitui contador nem o
-            cálculo oficial da Receita.
+            mudança de regime tributário. Esta calculadora faz uma{" "}
+            <strong>estimativa</strong> para você se planejar com mais
+            segurança. Para o cálculo oficial, confira na Receita e conte também
+            com seu contador.
           </p>
           <p>
             Dica prática: some todas as notas/receitas do ano (não só o que

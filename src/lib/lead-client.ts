@@ -10,10 +10,14 @@ function gtag(...args: unknown[]) {
 }
 
 /** Marca o lead no Analytics e avisa o e-mail da Sandra. Espera até 2s o aviso. */
-export function trackLead(kind: LeadKind, accessToken?: string): Promise<void> {
+export function trackLead(
+  kind: LeadKind,
+  accessToken?: string,
+  method: "email" | "google" = "email"
+): Promise<void> {
   try {
     if (kind === "cadastro") {
-      gtag("event", "sign_up", { method: "email" });
+      gtag("event", "sign_up", { method });
     } else {
       gtag("event", "primeiro_comprovante");
     }
@@ -41,4 +45,22 @@ export function trackLead(kind: LeadKind, accessToken?: string): Promise<void> {
       window.setTimeout(resolve, 2000);
     }),
   ]);
+}
+
+/**
+ * Erro no cadastro → GA4 `cadastro_erro` com o tipo do erro (sem e-mail, nome
+ * nem mensagem bruta — nada de dado pessoal).
+ */
+export function trackCadastroErro(
+  errorType: string,
+  method: "email" | "google" = "email"
+): void {
+  try {
+    gtag("event", "cadastro_erro", {
+      error_type: errorType.slice(0, 40),
+      method,
+    });
+  } catch {
+    /* ignore */
+  }
 }

@@ -475,6 +475,12 @@ function UploadPageInner() {
       setError("Informe um valor válido.");
       return;
     }
+    // Primeira foto: salva direto ("só desta vez"), sem a pergunta fixa/parcelada.
+    // Menos toques até o /foto-ok. Dá para marcar como fixa depois.
+    if (transactions.length === 0) {
+      void commitSave("once");
+      return;
+    }
     // Despesa: pergunta se é fixa / parcelada antes de gravar
     if (type === "despesa") {
       setRecurringMode("once");
@@ -496,7 +502,7 @@ function UploadPageInner() {
         : Number(normalized.replace(",", "."));
       if (!Number.isFinite(amountNum) || amountNum <= 0) {
         setError("Informe um valor válido.");
-        setRecurringPromptOpen(true);
+        if (transactions.length > 0) setRecurringPromptOpen(true);
         return;
       }
 
@@ -604,7 +610,7 @@ function UploadPageInner() {
     } catch (e) {
       console.error("[upload.commitSave]", e);
       setError("Não foi possível salvar. Tente de novo.");
-      setRecurringPromptOpen(true);
+      if (transactions.length > 0) setRecurringPromptOpen(true);
     } finally {
       setSaving(false);
     }
@@ -704,6 +710,13 @@ function UploadPageInner() {
                 Importar
               </Button>
             </div>
+
+            {transactions.length === 0 && !preview && !analyzing && (
+              <p className="mt-4 max-w-sm rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-medium leading-relaxed text-emerald-900">
+                Não tem comprovante agora? Pode ser o print de qualquer PIX que
+                você recebeu ou pagou.
+              </p>
+            )}
 
             {fileName && (
               <p className="mt-3 text-xs text-slate-500">

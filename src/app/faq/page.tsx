@@ -37,12 +37,13 @@ const faqs: { q: string; a: ReactNode }[] = [
     ),
   },
   {
-    q: "Substitui o contador?",
+    q: "E o contador?",
     a: (
       <>
-        <strong>Não.</strong> O LucroMEI é organização e estimativa. Não substitui
-        contador, DAS oficial do Portal do Empreendedor, nem declarações à Receita.
-        Use como apoio no dia a dia.
+        O LucroMEI organiza suas finanças e estima seus impostos para você
+        decidir com mais segurança no dia a dia. Para declarações oficiais (DAS
+        no Portal do Empreendedor, declaração anual à Receita), conte também
+        com seu contador.
       </>
     ),
   },
