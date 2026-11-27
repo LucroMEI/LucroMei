@@ -65,7 +65,7 @@ const plans = [
   {
     name: "Early Bird",
     price: "R$ 19,90",
-    period: "/mês",
+    period: "mês",
     blurb: "Preço de lançamento · vagas limitadas",
     highlight: true,
     note: "Assinatura após os 14 dias grátis",
@@ -73,7 +73,7 @@ const plans = [
   {
     name: "Mensal",
     price: "R$ 29,90",
-    period: "/mês",
+    period: "mês",
     blurb: "Flexível · cancela quando quiser",
     highlight: false,
     note: "Assinatura após os 14 dias grátis",
@@ -81,7 +81,7 @@ const plans = [
   {
     name: "Anual",
     price: "R$ 24,90",
-    period: "/mês",
+    period: "mês",
     blurb: "Cobrado anualmente · economia vs mensal",
     highlight: false,
     note: "Assinatura após os 14 dias grátis",
@@ -401,7 +401,7 @@ export default function LandingPage() {
                   <p className="mt-2 text-3xl font-extrabold tabular-nums text-slate-900">
                     {plan.price}
                     <span className="text-sm font-semibold text-slate-500">
-                      {plan.period}
+                      /{plan.period}
                     </span>
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-600">{plan.blurb}</p>

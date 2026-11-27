@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
         destination: "https://uselucromei.com.br/:path*",
         permanent: true,
       },
+      // Google achou "/mês" (texto do preço) como link → 404. Manda para a home.
+      { source: "/m%C3%AAs", destination: "/", statusCode: 301 },
+      { source: "/mês", destination: "/", statusCode: 301 },
     ];
   },
 };
