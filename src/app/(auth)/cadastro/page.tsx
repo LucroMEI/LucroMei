@@ -148,7 +148,7 @@ export default function CadastroPage() {
       </Link>
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Começar o teste</CardTitle>
+          <CardTitle>Começar o teste grátis</CardTitle>
           <CardDescription>
             <strong>14 dias grátis</strong>, <strong>sem cartão</strong>. Depois é
             só tirar foto do último PIX ou da notinha.
@@ -252,6 +252,18 @@ export default function CadastroPage() {
           </p>
         </CardContent>
       </Card>
+      <div className="mt-5 w-full max-w-md rounded-2xl border border-emerald-100 bg-white/70 px-5 py-4 text-sm text-slate-700">
+        <p className="font-bold text-slate-900">O que acontece depois</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 font-medium">
+          <li>Você entra direto no app (sem esperar e-mail).</li>
+          <li>Tira foto de um comprovante ou PIX: o app lê e você confere.</li>
+          <li>Vê o lucro estimado do mês. Nada é cobrado nos 14 dias.</li>
+        </ol>
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          App particular, não é do governo. Dados tratados conforme a LGPD.
+          Criado pela Sandra, que usa o LucroMEI na própria empresa.
+        </p>
+      </div>
     </div>
   );
 }

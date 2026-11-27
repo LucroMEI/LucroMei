@@ -35,6 +35,31 @@ export const BLOG_POSTS: BlogPost[] = [
     keywords: ["planilha mei gratis", "planilha mei", "caderno ou planilha mei"],
     date: "2026-08-31",
   },
+  {
+    slug: "limite-mei-2026-2027",
+    title: "Limite do MEI: R$ 81 mil em 2026 e R$ 110 mil em 2027 (o que muda)",
+    description:
+      "Entenda o limite de faturamento do MEI em 2026, o novo teto de R$ 110 mil em 2027 e R$ 140 mil em 2028 (LC 238/2026), o limite proporcional e o que acontece se passar.",
+    keywords: [
+      "limite mei 2026",
+      "limite mei 2027",
+      "quanto o mei pode faturar",
+      "novo teto mei",
+    ],
+    date: "2026-11-27",
+  },
+  {
+    slug: "relatorio-mensal-mei",
+    title: "Relatório mensal do MEI: o que é, prazo e como fazer sem planilha",
+    description:
+      "O Relatório Mensal de Receitas Brutas é obrigação do MEI. Veja o que preencher, até quando, onde guardar e um jeito simples de não esquecer.",
+    keywords: [
+      "relatorio mensal mei",
+      "relatório mensal de receitas brutas",
+      "controle financeiro mei",
+    ],
+    date: "2026-11-27",
+  },
 ];
 
 export function getPost(slug: string) {

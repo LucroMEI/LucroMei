@@ -23,6 +23,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
     },
     {
+      path: "/blog/limite-mei-2026-2027",
+      priority: 0.9,
+      changeFrequency: "monthly",
+    },
+    {
+      path: "/blog/relatorio-mensal-mei",
+      priority: 0.9,
+      changeFrequency: "monthly",
+    },
+    {
       path: "/blog/planilha-mei-gratis",
       priority: 0.9,
       changeFrequency: "monthly",

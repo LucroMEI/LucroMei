@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Disclaimer } from "@/components/disclaimer";
 import { SiteFooter } from "@/components/site-footer";
 import { DemoVideo } from "@/components/demo-video";
+import { CtaLink } from "@/components/cta-link";
+import { StickyCta } from "@/components/sticky-cta";
 import {
   canonicalUrl,
   SITE_DESCRIPTION,
@@ -56,9 +58,45 @@ const features = [
 ];
 
 const steps = [
-  "Tire foto ou envie o PDF do comprovante",
-  "A IA sugere valor, data e categoria (você confirma)",
-  "Veja o lucro estimado e o lembrete do DAS no dashboard",
+  {
+    title: "Crie a conta grátis",
+    desc: "Só e-mail e senha (ou sua conta Google). Sem cartão.",
+  },
+  {
+    title: "Tire foto do comprovante ou do PIX",
+    desc: "O app lê valor, data e categoria. Você confere e salva.",
+  },
+  {
+    title: "Veja quanto sobrou no mês",
+    desc: "Receitas, despesas, lucro estimado e o lembrete do DAS.",
+  },
+];
+
+const homeFaq = [
+  {
+    q: "Preciso colocar cartão para testar?",
+    a: "Não. Você cria a conta só com e-mail e senha e usa 14 dias grátis. Não existe cobrança automática no fim do teste: só paga se escolher um plano.",
+  },
+  {
+    q: "É o aplicativo oficial do MEI do governo?",
+    a: "Não. O LucroMEI é um app particular para organizar o seu dinheiro. O DAS e a declaração anual continuam no Portal do Empreendedor / app MEI do governo.",
+  },
+  {
+    q: "Precisa baixar alguma coisa?",
+    a: "Não. Funciona no navegador do celular ou do computador. Você pode adicionar à tela inicial como um app.",
+  },
+  {
+    q: "Substitui o contador?",
+    a: "Não. O LucroMEI organiza suas finanças e estima seus impostos para você decidir com mais segurança. Para declarações oficiais, conte também com seu contador.",
+  },
+  {
+    q: "Meus comprovantes ficam seguros?",
+    a: "Tratamos os dados com sigilo e conforme a LGPD. Cada conta só vê os próprios dados. Pagamentos passam pela Stripe; o cartão completo não fica conosco.",
+  },
+  {
+    q: "E se eu não gostar?",
+    a: "É só não assinar. Se assinar e quiser sair, cancela pelo portal da Stripe ou pela página de Contato.",
+  },
 ];
 
 const plans = [
@@ -114,6 +152,14 @@ export default function LandingPage() {
           description: "14 dias grátis, sem cartão",
         },
       },
+      {
+        "@type": "FAQPage",
+        mainEntity: homeFaq.map(({ q, a }) => ({
+          "@type": "Question",
+          name: q,
+          acceptedAnswer: { "@type": "Answer", text: a },
+        })),
+      },
     ],
   };
 
@@ -138,11 +184,11 @@ export default function LandingPage() {
                 Entrar
               </Button>
             </Link>
-            <Link href="/cadastro">
+            <CtaLink local="topo">
               <Button size="sm" className="bg-mustard font-semibold text-white shadow-sm hover:bg-mustard-dark">
-                14 dias grátis
+                Testar grátis
               </Button>
-            </Link>
+            </CtaLink>
           </div>
         </div>
       </header>
@@ -153,32 +199,34 @@ export default function LandingPage() {
           <div className="mx-auto max-w-5xl px-5 pb-16 pt-12 text-center md:pb-24 md:pt-20">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-sm">
               <Shield className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-              Feito para MEIs do Brasil
+              App para MEI · controle financeiro sem planilha
             </div>
 
-            <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
-              Tire uma foto do comprovante
-              <br />
+            <h1 className="mx-auto max-w-3xl text-[2.1rem] font-extrabold leading-[1.1] tracking-tight text-slate-900 md:text-5xl lg:text-[3.25rem]">
+              Saiba quanto o seu MEI{" "}
               <span className="text-mustard-text">
-                e descubra quanto realmente sobrou.
+                realmente lucrou este mês.
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-md text-lg font-medium leading-relaxed text-slate-600 md:text-xl">
-              Sem planilha, sem termos difíceis. Você fotografa, o LucroMEI
-              calcula.
+            <p className="mx-auto mt-5 max-w-md text-lg font-medium leading-relaxed text-slate-600 md:text-xl">
+              Tire foto do comprovante ou do PIX. O LucroMEI lê, organiza e
+              mostra o que sobrou. Sem planilha.
             </p>
 
-            <div className="mt-10 flex flex-col items-center justify-center gap-4">
-              <Link href="/cadastro">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3">
+              <CtaLink local="hero">
                 <Button
                   size="lg"
-                  className="min-w-[250px] rounded-full bg-mustard px-7 text-base font-bold text-white shadow-md hover:bg-mustard-dark"
+                  className="min-w-[270px] rounded-full bg-mustard px-7 text-base font-bold text-white shadow-md hover:bg-mustard-dark"
                 >
-                  Criar conta · 14 dias grátis
+                  Testar grátis por 14 dias
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </Button>
-              </Link>
+              </CtaLink>
+              <p className="text-xs font-medium text-slate-500">
+                Sem cartão · só e-mail e senha · sem cobrança automática
+              </p>
               <Link
                 href="/login"
                 className="text-sm font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
@@ -224,6 +272,42 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Como funciona — 3 passos, logo depois do vídeo */}
+        <section className="border-t border-slate-200 bg-white px-4 py-14">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-center text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+              Como funciona
+            </h2>
+            <ol className="mt-8 grid gap-4 md:grid-cols-3">
+              {steps.map((s, i) => (
+                <li
+                  key={s.title}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-sm font-extrabold text-white">
+                    {i + 1}
+                  </span>
+                  <p className="mt-3 text-base font-bold text-slate-900">{s.title}</p>
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-slate-600">
+                    {s.desc}
+                  </p>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-8 text-center">
+              <CtaLink local="como_funciona">
+                <Button
+                  size="lg"
+                  className="min-w-[260px] rounded-full bg-emerald-600 font-bold hover:bg-emerald-700"
+                >
+                  Começar meu teste grátis
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                </Button>
+              </CtaLink>
+            </div>
+          </div>
+        </section>
+
         {/* Quem criou a LucroMEI */}
         <section className="border-t border-slate-200 bg-slate-50 px-4 py-16">
           <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 md:flex-row md:items-center md:gap-10">
@@ -245,6 +329,14 @@ export default function LandingPage() {
               <p className="mt-3 text-base font-medium leading-relaxed text-slate-700">
                 Eu sou a Sandra. Eu uso a LucroMEI todo mês para controlar as
                 contas da minha própria empresa.
+              </p>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
+                Criei o app porque planilha dava trabalho demais. Se tiver
+                dúvida, fale comigo direto pela página de{" "}
+                <Link href="/contato" className="font-semibold text-emerald-700 hover:underline">
+                  contato
+                </Link>
+                .
               </p>
               <a
                 href="https://www.instagram.com/lucromei.oficial/"
@@ -355,23 +447,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Steps */}
-        <section className="mx-auto max-w-5xl border-t border-slate-200 bg-white px-4 py-16">
-          <h2 className="text-center text-2xl font-extrabold tracking-tight text-slate-900">
-            Como funciona
-          </h2>
-          <ol className="mx-auto mt-10 max-w-md space-y-5">
-            {steps.map((s, i) => (
-              <li key={s} className="flex items-center gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-extrabold text-white shadow-sm">
-                  {i + 1}
-                </span>
-                <span className="text-base font-semibold text-slate-800">{s}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-
         {/* Pricing */}
         <section className="border-t border-slate-200 bg-slate-50 py-16">
           <div className="mx-auto max-w-5xl px-4 text-center">
@@ -394,7 +469,7 @@ export default function LandingPage() {
                 >
                   {plan.highlight && (
                     <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
-                      Mais popular no lançamento
+                      Preço de lançamento
                     </p>
                   )}
                   <p className="text-sm font-bold text-slate-900">{plan.name}</p>
@@ -426,17 +501,46 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link href="/cadastro" className="mt-8 inline-block">
+            <CtaLink local="planos" className="mt-8 inline-block">
               <Button
                 className="min-w-[260px] bg-emerald-600 font-bold hover:bg-emerald-700"
                 size="lg"
               >
-                Criar conta · 14 dias grátis
+                Testar grátis por 14 dias
               </Button>
-            </Link>
+            </CtaLink>
             <p className="mx-auto mt-3 max-w-md text-xs text-slate-500">
               Os planos Early Bird, Mensal e Anual ficam disponíveis na assinatura
               depois do período grátis (Early Bird enquanto houver vagas).
+            </p>
+          </div>
+        </section>
+
+        {/* Perguntas rápidas */}
+        <section className="border-t border-slate-200 bg-white py-14">
+          <div className="mx-auto max-w-2xl px-4">
+            <h2 className="text-center text-2xl font-extrabold tracking-tight text-slate-900">
+              Perguntas rápidas
+            </h2>
+            <div className="mt-8 space-y-3">
+              {homeFaq.map(({ q, a }) => (
+                <details
+                  key={q}
+                  className="group rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                >
+                  <summary className="cursor-pointer list-none text-base font-bold text-slate-900">
+                    {q}
+                  </summary>
+                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">{a}</p>
+                </details>
+              ))}
+            </div>
+            <p className="mt-6 text-center text-sm font-medium text-slate-600">
+              Mais respostas no{" "}
+              <Link href="/faq" className="font-semibold text-emerald-700 hover:underline">
+                FAQ completo
+              </Link>
+              .
             </p>
           </div>
         </section>
@@ -480,19 +584,21 @@ export default function LandingPage() {
           <p className="mx-auto mt-2 max-w-md text-sm font-medium text-emerald-100">
             14 dias grátis · sem cartão · só paga se quiser continuar
           </p>
-          <Link href="/cadastro" className="mt-6 inline-block">
+          <CtaLink local="final" className="mt-6 inline-block">
             <Button
               size="lg"
               className="bg-white font-bold text-emerald-800 shadow-md hover:bg-emerald-50"
             >
-              Criar conta · 14 dias grátis
+              Testar grátis por 14 dias
               <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
             </Button>
-          </Link>
+          </CtaLink>
         </section>
       </main>
 
       <SiteFooter />
+      <div className="h-20 md:hidden" aria-hidden />
+      <StickyCta />
     </div>
   );
 }
